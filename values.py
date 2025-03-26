@@ -38,21 +38,6 @@ I_b_inv = np.linalg.inv(I_b)
 # In COMM mode, LMO and GMO position vectors have angular difference of <35 degrees
 # This means -b_1 must point in direction of GMO
 
-lmo_omega_0 = np.deg2rad(20) #deg
-lmo_i_0 = np.deg2rad(30) #deg
-lmo_theta_0 = np.deg2rad(60) #deg - function of time
-gmo_omega_0 = 0 #deg
-gmo_i_0 = 0 #deg
-gmo_theta_0 = np.deg2rad(250) #deg - function of time
-
-
-def theta_lmo(t):
-    return lmo_theta_0 + t*theta_lmo_rate
-
-def theta_gmo(t):
-    return gmo_theta_0 + t*theta_gmo_rate
-
-
 # we will use solve_ivp to ensure use of RK45
 
 
@@ -117,6 +102,20 @@ t_0 = 0.0  # Initial time
 # pos = r*i_r
 # Derive inertial s/c velocity r_dot. Note that for circular orbits, theta_dot is constant
 # Write a function whose inputs are radius r and 313 angles omega, i, theta, and outputs are the inertial pos vector N_r and vel N_r_dot
+lmo_omega_0 = np.deg2rad(20)
+lmo_i_0 = np.deg2rad(30)
+lmo_theta_0 = np.deg2rad(60) #function of time
+gmo_omega_0 = 0
+gmo_i_0 = 0
+gmo_theta_0 = np.deg2rad(250) #function of time
+
+
+def theta_lmo(t):
+    return lmo_theta_0 + t*theta_lmo_rate
+
+def theta_gmo(t):
+    return gmo_theta_0 + t*theta_gmo_rate
+
 def s(theta):
     return np.sin(theta)
 def c(theta):  
@@ -131,7 +130,7 @@ def Euler313toDCM(t1, t2, t3):
 def orbit_sim(r, omega, i, theta):
     # O : {i_r, i_theta, i_h}
     # N : {n_1, n_2, n_3}
-    NO = Euler313toDCM(theta, i, omega)
+    NO = Euler313toDCM(omega, i, theta)
     # Convert direction of i_r to N
     N_r = NO @ np.array([r, 0, 0])
     # Convert direction of i_theta to N
