@@ -38,12 +38,12 @@ I_b_inv = np.linalg.inv(I_b)
 # In COMM mode, LMO and GMO position vectors have angular difference of <35 degrees
 # This means -b_1 must point in direction of GMO
 
-lmo_omega_0 = 20 #deg
-lmo_i_0 = 30 #deg
-lmo_theta_0 = 60 #deg - function of time
+lmo_omega_0 = np.deg2rad(20) #deg
+lmo_i_0 = np.deg2rad(30) #deg
+lmo_theta_0 = np.deg2rad(60) #deg - function of time
 gmo_omega_0 = 0 #deg
 gmo_i_0 = 0 #deg
-gmo_theta_0 = 250 #deg - function of time
+gmo_theta_0 = np.deg2rad(250) #deg - function of time
 
 
 def theta_lmo(t):
@@ -141,6 +141,9 @@ def orbit_sim(r, omega, i, theta):
 
 # confirm the operation by checking orbit_sim(r_lmo, omega_lmo, i_lmo, theta_lmo(450)) and orbit_sim(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
 N_r_lmo, N_r_lmo_dot = orbit_sim(r_lmo, lmo_omega_0, lmo_i_0, theta_lmo(450))
+print(np.sqrt(mu/r_lmo**3))
+print(np.sqrt(mu/r_gmo**3))
+
 print("\n\n\n\n\n\n\n\n\n\n\n\n\n")
 print("N_r_lmo = ", N_r_lmo)
 print("N_r_lmo_dot = ", N_r_lmo_dot)
