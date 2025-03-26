@@ -131,7 +131,7 @@ def Euler313toDCM(t1, t2, t3):
 def orbit_sim(r, omega, i, theta):
     # O : {i_r, i_theta, i_h}
     # N : {n_1, n_2, n_3}
-    NO = Euler313toDCM(omega, i, theta)
+    NO = Euler313toDCM(theta, i, omega)
     # Convert direction of i_r to N
     N_r = NO @ np.array([r, 0, 0])
     # Convert direction of i_theta to N
