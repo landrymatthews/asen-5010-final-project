@@ -22,9 +22,9 @@ theta_gmo_rate = 0.0000709003 #rad/s
 sigma_bn_0 = np.array([0.3, -0.4, 0.5]) #MRPs
 # sigma_bn_0_norm = sigma_bn_0/np.linalg.norm(sigma_bn_0)
 omega_bn_0 = np.array([1.00, 1.75, -2.20]) #deg/s
-I_b = np.array([10, 0, 0],
+I_b = np.array([[10, 0, 0],
                [0, 5, 0],
-               [0, 0, 7.5]) #kg*m^2
+               [0, 0, 7.5]]) #kg*m^2
 I_b_inv = np.linalg.inv(I_b)
 # Assume s/c can create any 3d control torque vector u
 # Sun is infinite distance away and always in the n_2 direction
@@ -62,52 +62,52 @@ tmax = 6500  # Set the value of tmax
 dt = .1  # Set the value of Δt
 t_0 = 0.0  # Initial time
 
-# Function to evaluate current reference frame states (example, replace with actual evaluation)
-def evaluate_reference_frame(tn):
-    # Replace with actual logic to compute RN(t), NωR/N(t), etc.
-    return RN, omega_rn
+# # Function to evaluate current reference frame states (example, replace with actual evaluation)
+# def evaluate_reference_frame(tn):
+#     # Replace with actual logic to compute RN(t), NωR/N(t), etc.
+#     return RN, omega_rn
 
-# Function to calculate control tracking errors (example)
-def control_tracking_errors():
-    # Replace with actual logic to compute σB/R and BωB/R
-    return sigma_br, omega_br
+# # Function to calculate control tracking errors (example)
+# def control_tracking_errors():
+#     # Replace with actual logic to compute σB/R and BωB/R
+#     return sigma_br, omega_br
 
-# Function to determine control solution (example)
-def control_solution():
-    # Replace with actual logic to determine control solution u
-    return u
+# # Function to determine control solution (example)
+# def control_solution():
+#     # Replace with actual logic to determine control solution u
+#     return u
 
-# Function to compute the differential (replace with your differential equation model)
-def f(Xn, t_n, u):
-    # Replace with actual system dynamics function for f(Xn, tn, u)
-    return Xn
+# # Function to compute the differential (replace with your differential equation model)
+# def f(Xn, t_n, u):
+#     # Replace with actual system dynamics function for f(Xn, tn, u)
+#     return Xn
 
-# Run the time-stepping loop
-X_n = X_0  # Initialize the state
-t_n = t_0
-sigma_bn = sigma_bn_0
-omega_bn = omega_bn_0
-while tn < tmax:
-    if new_control_required():
-        # If new control is required, evaluate reference frame states and control tracking errors
-        RN_t, NωR_N_t = evaluate_reference_frame(tn)
-        σB_R, BωB_R = control_tracking_errors()
-        u = control_solution()
+# # Run the time-stepping loop
+# X_n = X_0  # Initialize the state
+# t_n = t_0
+# sigma_bn = sigma_bn_0
+# omega_bn = omega_bn_0
+# while t_n < tmax:
+#     if new_control_required():
+#         # If new control is required, evaluate reference frame states and control tracking errors
+#         RN_t, NωR_N_t = evaluate_reference_frame(tn)
+#         σB_R, BωB_R = control_tracking_errors()
+#         u = control_solution()
 
-    # Run the 4th order Runge-Kutta integration
-    k1 = dt * f(X_n, t_n, u)
-    k2 = dt * f([X_n + k1/2], t_n + dt/2, u)
-    k3 = dt * f([X_n + k2/2], t_n + dt/2, u)
-    k4 = dt * f([X_n + k3], t_n + dt, u)
-    X_n = [X_n + (1/6)*(k1 + 2*k2 + 2*k3 + k4)] # Update the state
+#     # Run the 4th order Runge-Kutta integration
+#     k1 = dt * f(X_n, t_n, u)
+#     k2 = dt * f([X_n + k1/2], t_n + dt/2, u)
+#     k3 = dt * f([X_n + k2/2], t_n + dt/2, u)
+#     k4 = dt * f([X_n + k3], t_n + dt, u)
+#     X_n = [X_n + (1/6)*(k1 + 2*k2 + 2*k3 + k4)] # Update the state
 
-    # Check for control error and map to shadow set if necessary
-    if abs(sigma_bn) > 1:
-        # Map σB/N to shadow set
-        pass
+#     # Check for control error and map to shadow set if necessary
+#     if abs(sigma_bn) > 1:
+#         # Map σB/N to shadow set
+#         pass
 
-    # Update time and save states
-    tn += Δt
+#     # Update time and save states
+#     tn += Δt
     # Save spacecraft states Xn and u (you can save this to a file or list as needed)
     # save_states(Xn, u)
 
@@ -140,6 +140,12 @@ def orbit_sim(r, omega, i, theta):
 
 
 # confirm the operation by checking orbit_sim(r_lmo, omega_lmo, i_lmo, theta_lmo(450)) and orbit_sim(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
-orbit_sim(r_lmo, lmo_omega_0, lmo_i_0, theta_lmo(450))
-orbit_sim(r_gmo, gmo_omega_0, gmo_i_0, theta_gmo(1150))
+N_r_lmo, N_r_lmo_dot = orbit_sim(r_lmo, lmo_omega_0, lmo_i_0, theta_lmo(450))
+print("\n\n\n\n\n\n\n\n\n\n\n\n\n")
+print("N_r_lmo = ", N_r_lmo)
+print("N_r_lmo_dot = ", N_r_lmo_dot)
+N_r_gmo, N_r_gmo_dot = orbit_sim(r_gmo, gmo_omega_0, gmo_i_0, theta_gmo(1150))
+print("N_r_gmo = ", N_r_gmo)
+print("N_r_gmo_dot = ", N_r_gmo_dot)
+print("\n\n\n\n\n\n\n\n\n\n\n\n\n")
 # Task 2: Orbit Frame Orientation (5 points)
