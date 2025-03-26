@@ -130,7 +130,8 @@ def Euler313toDCM(t1, t2, t3):
 def orbit_sim(r, omega, i, theta):
     # O : {i_r, i_theta, i_h}
     # N : {n_1, n_2, n_3}
-    NO = Euler313toDCM(omega, i, theta)
+    ON = Euler313toDCM(omega, i, theta)
+    NO = ON.T
     # Convert direction of i_r to N
     N_r = NO @ np.array([r, 0, 0])
     # Convert direction of i_theta to N
@@ -150,4 +151,14 @@ N_r_gmo, N_r_gmo_dot = orbit_sim(r_gmo, gmo_omega_0, gmo_i_0, theta_gmo(1150))
 print("N_r_gmo = ", N_r_gmo)
 print("N_r_gmo_dot = ", N_r_gmo_dot)
 print("\n\n\n\n\n\n\n\n\n\n\n\n\n")
+
+
 # Task 2: Orbit Frame Orientation (5 points)
+from sympy import symbols, pprint, init_printing, cos, sin, Matrix, pi
+Omega = symbols("Omega")
+theta = symbols("theta")
+i = symbols("i")
+HN = Matrix([[cos(theta)*cos(Omega)-sin(theta)*cos(i)*sin(Omega), cos(theta)*sin(Omega)+sin(theta)*cos(i)*cos(Omega), sin(theta)*sin(i)],
+                     [-sin(theta)*cos(Omega)-cos(theta)*cos(i)*sin(Omega), -sin(theta)*sin(Omega)+cos(theta)*cos(i)*cos(Omega), cos(theta)*sin(i)],
+                     [sin(i)*sin(Omega), -sin(i)*cos(Omega), cos(i)]])
+HN
