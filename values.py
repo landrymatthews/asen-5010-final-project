@@ -285,21 +285,36 @@ print("\n\nBEGIN TASK 5")
 theta_gmo_expr = sp.Function(symbols('theta_GMO'))
 theta_lmo_expr = sp.Function(symbols('theta_LMO'))
 # Omega_gmo_expr, i_gmo_expr, Omega_lmo_expr, i_lmo_expr = sp.symbols('Omega_GMO i_GMO Omega_LMO i_LMO')
-H_r1_col = sp.Matrix([-1, 0, 0]) # r1 points in -i_r_gmo direction
+# H_r1_col = sp.Matrix([-1, 0, 0]) # r1 points in -i_r_gmo direction
 NH = HN.T
 NH_gmo = NH.subs([(Omega, omega_gmo), (i, i_gmo), (theta, theta_gmo_expr)])
 NH_lmo = NH.subs([(Omega, omega_lmo), (i, i_lmo), (theta, theta_lmo_expr)])
-N_r1_col = NH_gmo @ H_r1 # already normalized
-# N_r1_f = sp.lambdify(['t'], N_r1, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
+# N_r1_col = (NH_gmo @ H_r1_col) # already normalized
+# N_r1_f = sp.lambdify(['t'], N_r1_col, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
 # N_r1_real = N_r1_f(330)
 # print(theta_gmo(330))
 # print(theta_lmo(330))
-# pprint(N_r1)
+# pprint(N_r1_col)
 # print(N_r1_real)
 N_r_gmo_col = NH_gmo @ sp.Matrix([r_gmo, 0, 0])
 N_r_lmo_col = NH_lmo @ sp.Matrix([r_lmo, 0, 0])
-N_dr_col = N_r_gmo_col - N_r_lmo_col
+
+
+N_r_gmo_col_f = sp.lambdify(['t'], N_r_gmo_col.normalized(), modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
+N_r_lmo_col_f = sp.lambdify(['t'], N_r_lmo_col.normalized(), modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
+N_r_gmo_real = N_r_gmo_col_f(330)
+N_r_lmo_real = N_r_lmo_col_f(330)
+# print(theta_gmo(330))
+# print(theta_lmo(330))
+# pprint(N_r1_col)
+print("heres r_gmo", N_r_gmo_real)
+print("heres r_lmo", N_r_lmo_real)
+
+N_dr_row = N_r_gmo_col.T - N_r_lmo_col.T
+N_dr_col = N_dr_row.T
+
 # print("HERER", N_dr.rows)
+N_r1_col = -N_dr_col.normalized()
 N_r2_col = (N_dr_col.cross(sp.Matrix([0, 0, 1]))).normalized()
 
 # N_r2_f = sp.lambdify(['t'], N_r2, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
