@@ -285,34 +285,34 @@ print("\n\nBEGIN TASK 5")
 theta_gmo_expr = sp.Function(symbols('theta_GMO'))
 theta_lmo_expr = sp.Function(symbols('theta_LMO'))
 # Omega_gmo_expr, i_gmo_expr, Omega_lmo_expr, i_lmo_expr = sp.symbols('Omega_GMO i_GMO Omega_LMO i_LMO')
-H_r1 = sp.Matrix([-1, 0, 0]) # r1 points in -i_r_gmo direction
+H_r1_col = sp.Matrix([-1, 0, 0]) # r1 points in -i_r_gmo direction
 NH = HN.T
 NH_gmo = NH.subs([(Omega, omega_gmo), (i, i_gmo), (theta, theta_gmo_expr)])
 NH_lmo = NH.subs([(Omega, omega_lmo), (i, i_lmo), (theta, theta_lmo_expr)])
-N_r1 = NH_gmo @ H_r1 # already normalized
-N_r1_f = sp.lambdify(['t'], N_r1, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
-N_r1_real = N_r1_f(330)
+N_r1_col = NH_gmo @ H_r1 # already normalized
+# N_r1_f = sp.lambdify(['t'], N_r1, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
+# N_r1_real = N_r1_f(330)
 # print(theta_gmo(330))
 # print(theta_lmo(330))
 # pprint(N_r1)
 # print(N_r1_real)
-N_r_gmo = NH_gmo @ sp.Matrix([r_gmo, 0, 0])
-N_r_lmo = NH_lmo @ sp.Matrix([r_lmo, 0, 0])
-N_dr = N_r_gmo.T - N_r_lmo.T
-print("HERER", N_dr.rows)
-N_r2 = ((N_dr).cross(sp.Matrix([0, 0, 1]).T)).normalized()
+N_r_gmo_col = NH_gmo @ sp.Matrix([r_gmo, 0, 0])
+N_r_lmo_col = NH_lmo @ sp.Matrix([r_lmo, 0, 0])
+N_dr_col = N_r_gmo_col - N_r_lmo_col
+# print("HERER", N_dr.rows)
+N_r2_col = (N_dr_col.cross(sp.Matrix([0, 0, 1]))).normalized()
 
-N_r2_f = sp.lambdify(['t'], N_r2, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
-N_r2_real = N_r2_f(330)
-print(N_r2_real)
+# N_r2_f = sp.lambdify(['t'], N_r2, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
+# N_r2_real = N_r2_f(330)
+# print(N_r2_real)
 
-N_r3 = ((N_r1.T).cross(N_r2.T)).normalized()
+N_r3_col = N_r1_col.cross(N_r2_col).normalized()
 
-N_r2_f = sp.lambdify(['t'], N_r2, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
-N_r2_real = N_r2_f(330)
-print(N_r2_real)
+# N_r2_f = sp.lambdify(['t'], N_r2, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
+# N_r2_real = N_r2_f(330)
+# print(N_r2_real)
 
-RcN = (sp.Matrix.hstack(N_r1, N_r2, N_r3)).T
+RcN = (sp.Matrix.hstack(N_r1_col, N_r2_col, N_r3_col)).T
 # pprint(RcN)
 RcN_f = sp.lambdify(['t'], RcN, modules=['numpy', {'theta_GMO': theta_gmo}, {'theta_LMO': theta_lmo}])
 pprint(RcN_f(330))
