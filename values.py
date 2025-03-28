@@ -245,11 +245,17 @@ def MRP2DCM(sigma):
         8 * tilde_sigma @ tilde_sigma - 4 * (1 - sigma @ sigma) * tilde_sigma
     ) / ((1 + sigma @ sigma) ** 2)
 
-
+def checkShadowSet(sigma):
+    if (np.linalg.norm(sigma) > 1):
+        return -sigma / (sigma @ sigma)
+    else:
+        return sigma
+    
 def DCM2MRP(C):
     b = DCM2Quaternion(C)
     divisor = 1 + b[0]
-    return np.array([b[1], b[2], b[3]]) / divisor
+    sigma = np.array([b[1], b[2], b[3]]) / divisor
+    return checkShadowSet(sigma)
 
 
 ############################## Task 1: Orbit Simulation (5 points) ##############################
@@ -281,15 +287,19 @@ def orbit_sim(r, omega, i, theta):
 # and orbit_sim(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
 N_r_lmo, N_r_lmo_dot = orbit_sim(r_lmo, omega_lmo, i_lmo, theta_lmo(450))
 N_r_gmo, N_r_gmo_dot = orbit_sim(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
-print("\nrLMO = ", N_r_lmo)
+print("rLMO = ", N_r_lmo)
 print("vLMO = ", N_r_lmo_dot)
 print("rGMO = ", N_r_gmo)
 print("vGMO = ", N_r_gmo_dot)
+writeToFile("./tasks/task 1/rLMO.txt", N_r_lmo)
+writeToFile("./tasks/task 1/vLMO.txt", N_r_lmo_dot)
+writeToFile("./tasks/task 1/rGMO.txt", N_r_gmo)
+writeToFile("./tasks/task 1/vGMO.txt", N_r_gmo_dot)
+
 
 
 ############################## Task 2: Orbit Frame Orientation (5 points) ##############################
 print("\n\nBEGIN TASK 2")
-# First determine and analytic expression for HN and print out the LaTeX code
 Omega, i = symbols("Omega i")
 t = symbols("t", positive=True)
 theta = sp.Function(symbols("theta"))
@@ -308,8 +318,8 @@ HN = Matrix(
         [sin(i) * sin(Omega), -sin(i) * cos(Omega), cos(i)],
     ]
 )
-print("\nHN in LaTeX form\n", sp.latex(HN))
-
+with open('./latex/task_2_HN.tex', "w+") as file:
+    file.write((sp.latex(HN)))
 
 # Write a function whose input is time t and output is DCM HN(t) for the LMO
 def getHNforLMO(t):
@@ -318,38 +328,43 @@ def getHNforLMO(t):
 
 # Validate the operation by computing HN(300)
 t = 300  # sec
-print("\nHN(t = " + str(t) + "s) = ", getHNforLMO(t))
+HN_at_t = getHNforLMO(t)
+print("HN(t = " + str(t) + "s) = ", HN_at_t)
+writeToFile("./tasks/task 2/HN.txt", HN_at_t)
 
 
 ############################## Task 3: Sun-Pointing Reference Frame Orientation (10 points) ##############################
 print("\n\nBEGIN TASK 3")
 # First determine and analytic expression for Rs by defining DCM [RsN]
 RsN = np.array([[-1, 0, 0], [0, 0, 1], [0, 1, 0]])
-print("\nRsN in LaTeX form\n", sp.latex(RsN))
-
+with open('./latex/RsN.tex', "w+") as file:
+    file.write((sp.latex(RsN)))
 
 # Write a function that returns RsN
 def getRsN():
     return RsN
-
 
 def getOmegaRsN():
     return np.array([0, 0, 0])
 
 
 # Validate the evalutation of RsN by providing numerical values for t=0s
-print("\nRsN(t = 0s) = ", getRsN())
+print("RsN(t = 0s) = ", getRsN())
+writeToFile("./tasks/task 3/RsN.txt", getRsN())
 
 # Angular velocity is [0, 0, 0] since the DCM is not a function of time
-print("\nN_ω_Rn/N = ", getOmegaRsN())
+print("N_ω_Rn/N = ", getOmegaRsN())
+writeToFile("./tasks/task 3/omega_rs_n.txt", getOmegaRsN())
 
 
 ############################## Task 4: Nadir-Pointing Reference Frame Orientation (10 points) ##############################
 print("\n\nBEGIN TASK 4")
 # First determine and analytic expression for Rn by defining DCM [RnN]
 RnH = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
-print("\nRnH in LaTeX form\n", sp.latex(RnH))
-print("\nRnN in LaTeX form\n", sp.latex(RnH @ HN))
+with open('./latex/RnH.tex', "w+") as file:
+    file.write((sp.latex(RnH)))
+with open('./latex/RnN.tex', "w+") as file:
+    file.write((sp.latex(RnH @ HN)))
 
 
 # Write a function that returns RnN
@@ -365,10 +380,14 @@ def getOmegaRnN(t):
 
 t = 330  # sec
 # Validate the evalutation of RnN by providing numerical values for t = 330s
-print("\nRnN(t = " + str(t) + "s) = ", getRnN(t))
+RnN_at_t = getRnN(t)
+print("RnN(t = " + str(t) + "s) = ", RnN_at_t)
+writeToFile("./tasks/task 4/RnN.txt", RnN_at_t)
 
 # What is the angular velocity @ t = 330s
-print("\nN_ω_Rn/N(t = " + str(t) + "s) = ", getOmegaRnN(t))
+omega_rnn_at_t = getOmegaRnN(t)
+print("N_ω_Rn/N(t = " + str(t) + "s) = ", omega_rnn_at_t)
+writeToFile("./tasks/task 4/omega_rn_n.txt", omega_rnn_at_t)
 
 
 ############################## Task 5: GMO-Pointing Reference Frame Orientation (10 points) ##############################
@@ -397,7 +416,6 @@ def getRcNExpr():
 
 
 def getRcN(t):
-    # pprint(sp.latex(RcN)) # this is an insane matrix - probably too much to add to a document
     RcN = getRcNExpr()
     RcN_f = sp.lambdify(
         ["t"],
@@ -421,25 +439,28 @@ def getOmegaRcNAnalytically(time):
     replace_dict = {theta_gmo_expr(t): replace_gmo, theta_lmo_expr(t): replace_lmo}
     RcN_rep = RcN.subs(replace_dict)
 
+    # Now sympy can take derivative wrt t
     RcN_dot = sp.diff(RcN_rep, t)
     omega_tilde = -RcN_dot @ RcN.T
+    # with open('./latex/insane_matrix.tex', "w+") as file:
+    #     file.write((sp.latex(omega_tilde)))
     omega_tilde_f = sp.lambdify(
         ["t"],
         omega_tilde,
         modules=["numpy", {"theta_GMO": theta_gmo}, {"theta_LMO": theta_lmo}],
     )
+
     ssm = omega_tilde_f(time)
-    ssm = (ssm - ssm.T) / 2
-    omega_rcn = sp.Matrix([-ssm[1, 2], ssm[0, 2], -ssm[0, 1]])
-    omega_rcn = RcN.T @ omega_rcn
-    omega_rcn_f = sp.lambdify(
+    ssm = (ssm - ssm.T) / 2 # Force diagonals to 0
+    R_omega_rcn = sp.Matrix([-ssm[1, 2], ssm[0, 2], -ssm[0, 1]])
+    N_omega_rcn = RcN.T @ R_omega_rcn
+    N_omega_rcn_f = sp.lambdify(
         ["t"],
-        omega_rcn,
+        N_omega_rcn,
         modules=["numpy", {"theta_GMO": theta_gmo}, {"theta_LMO": theta_lmo}],
     )
-    omega_rcn_real = omega_rcn_f(time)
-    return omega_rcn_real.flatten()
-
+    N_omega_rcn_real = N_omega_rcn_f(time)
+    return N_omega_rcn_real.flatten()
 
 def getOmegaRcN(time):
     dt = 1e-6
@@ -450,10 +471,10 @@ def getOmegaRcN(time):
     RcN_dot = (RcN_plus - RcN_minus) / (2 * dt)
 
     ssm = -RcN_dot @ RcN_t.T
-    ssm = (ssm - ssm.T) / 2
-    omega_rcn = np.array([-ssm[1, 2], ssm[0, 2], -ssm[0, 1]])
-    omega_rcn = RcN_t.T @ omega_rcn
-    return omega_rcn
+    ssm = (ssm + ssm) / 2 # Force diagonals to 0
+    R_omega_rcn = np.array([-ssm[1, 2], ssm[0, 2], -ssm[0, 1]])
+    N_omega_rcn = RcN_t.T @ R_omega_rcn
+    return N_omega_rcn
 
 
 t = 330
@@ -471,37 +492,46 @@ writeToFile("./tasks/task 5/omega_rc_n_anal.txt", omega_RcN_anal_at_t)
 ############################## Task 6: Attitude Error Evaluation (10 points) ##############################
 print("\n\nBEGIN TASK 6")
 
-
 # Write function that returns tracking errors sigma_br and omega_br
 def getTrackingErrors(t, sigma_bn, B_omega_bn, RN, N_omega_rn):
-    # Get BN from current MRPs
+    # Get σ_BR from σ_BN and RN DCM
     BN = MRP2DCM(sigma_bn)
     BR = BN @ (RN.T)
     sigma_br = DCM2MRP(BR)
-    B_omega_br = B_omega_bn - BN @ N_omega_rn
 
-    return (sigma_br, B_omega_br)
+    # Get ω_br from ω_bn and ω_rn
+    B_omega_br = B_omega_bn - (BN @ N_omega_rn)
+
+    return sigma_br, B_omega_br
 
 
 # Sun-pointing
 t = 0
-result = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRsN(), getOmegaRsN())
-print("\nSun-Pointing Orientation")
-print("σ_B/R = ", result[0])
-print("ω_B/R = ", result[1])
-writeToFile("./tasks/task 6/sun-sigma.txt", result[0])
-writeToFile("./tasks/task 6/sun-omega.txt", result[1])
+sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRsN(), getOmegaRsN())
+print("Sun-Pointing Orientation")
+print("σ_B/R = ", sigma)
+print("ω_B/R = ", omega)
+writeToFile("./tasks/task 6/sun-sigma.txt", sigma)
+writeToFile("./tasks/task 6/sun-omega.txt", omega)
 
-result = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRnN(t), getOmegaRnN(t))
-print("\nNadir-Pointing Orientation")
-print("σ_B/R = ", result[0])
-print("ω_B/R = ", result[1])
-writeToFile("./tasks/task 6/nad-sigma.txt", result[0])
-writeToFile("./tasks/task 6/nad-omega.txt", result[1])
+# Nadir-pointing
+sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRnN(t), getOmegaRnN(t))
+print("Nadir-Pointing Orientation")
+print("σ_B/R = ", sigma)
+print("ω_B/R = ", omega)
+writeToFile("./tasks/task 6/nad-sigma.txt", sigma)
+writeToFile("./tasks/task 6/nad-omega.txt", omega)
 
-result = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRcN(t), getOmegaRcN(t))
-print("\nGMO-Pointing Orientation")
-print("σ_B/R = ", result[0])
-print("ω_B/R = ", result[1])
-writeToFile("./tasks/task 6/gmo-sigma.txt", result[0])
-writeToFile("./tasks/task 6/gmo-omega.txt", result[1])
+# GMO-pointing
+sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRcN(t), getOmegaRcN(t))
+print("GMO-Pointing Orientation")
+print("σ_B/R = ", sigma)
+print("ω_B/R = ", omega)
+writeToFile("./tasks/task 6/gmo-sigma.txt", sigma)
+writeToFile("./tasks/task 6/gmo-omega.txt", omega)
+
+
+
+
+############################## Numerical Attitude Simulator (10 points) ##############################
+print("\n\nBEGIN TASK 7")
