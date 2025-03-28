@@ -1,6 +1,7 @@
 import numpy as np
 from sympy import symbols, pprint, cos, sin, Matrix, pi
 import sympy as sp
+import matplotlib.pyplot as plt
 
 # i_r points to s/c
 # i_h direction of H
@@ -134,7 +135,7 @@ def s(theta):
 def c(theta):
     return np.cos(theta)
 
-
+# Returns a skew-symmetric matrix from a vector
 def tilde(v):
     return np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
 
@@ -535,3 +536,120 @@ writeToFile("./tasks/task 6/gmo-omega.txt", omega)
 
 ############################## Numerical Attitude Simulator (10 points) ##############################
 print("\n\nBEGIN TASK 7")
+
+# Write your own numerical integrator using RK45
+
+# Constants for inertia matrix (for simplicity, assuming a diagonal matrix)
+I_b = I_b
+X_0 = X_0
+# Define the skew-symmetric matrix of a vector
+def skew(v):
+    return np.array([[0, -v[2], v[1]],
+                     [v[2], 0, -v[0]],
+                     [-v[1], v[0], 0]])
+
+# Define the spacecraft dynamics (equation of motion)
+def dynamics(X, u):
+    sigma_BN = X[:3]  # MRP attitude
+    omega_BN = X[3:]  # Angular velocity
+    omega_BN_skew = skew(omega_BN)
+    
+    # Equation of motion
+    d_omega_BN = -np.dot(omega_BN_skew, I @ omega_BN) + u
+    return np.concatenate((d_sigma_BN(sigma_BN, omega_BN), d_omega_BN))
+
+# MRP kinematics
+def d_sigma_BN(sigma_BN, omega_BN):
+    # MRP update equations (for simplicity assume small angles)
+    sigma_dot = 0.5 * (np.eye(3) - skew(sigma_BN)) @ omega_BN
+    return sigma_dot
+
+# Runge-Kutta 4th order integrator
+def rk4_integrator(f, X, u, dt):
+    k1 = f(X, u)
+    k2 = f(X + 0.5 * dt * k1, u)
+    k3 = f(X + 0.5 * dt * k2, u)
+    k4 = f(X + dt * k3, u)
+    return X + (dt / 6) * (k1 + 2*k2 + 2*k3 + k4)
+
+# Initial conditions (assuming initial angular velocity and MRP are zero)
+
+# Time settings
+dt = 1e-6  # 1 second time step
+t_final = 500.0  # Total time for the integration
+time_steps = int(t_final / dt)
+
+# Control torque (zero initially)
+u = np.zeros(3)  # Control torque vector
+
+# Arrays to store results for plotting
+sigma_BN_history = []
+omega_BN_history = []
+T_history = []
+H_history = []
+
+# Integration loop (u = 0 for this part)
+X = X_0
+for t in range(time_steps):
+    sigma_BN_history.append(X[:3])
+    omega_BN_history.append(X[3:])
+    
+    # Compute rotational kinetic energy T
+    T = 0.5 * np.dot(X[3:], I @ X[3:])
+    T_history.append(T)
+    
+    # Compute angular momentum H
+    H = I_b @ X[3:]
+    H_history.append(H)
+    
+    # Update attitude using RK4
+    X = rk4_integrator(dynamics, X, u, dt)
+
+# Results at 500 seconds
+sigma_BN_500 = sigma_BN_history[-1]
+omega_BN_500 = omega_BN_history[-1]
+T_500 = T_history[-1]
+H_500 = H_history[-1]
+
+print(f"MRP attitude at 500s: {sigma_BN_500}")
+print(f"Angular velocity at 500s: {omega_BN_500}")
+print(f"Rotational kinetic energy at 500s: {T_500}")
+print(f"Angular momentum at 500s: {H_500}")
+
+# Now apply control torque u = (0.01, -0.01, 0.02) Nm and integrate again for 100s
+u_fixed = np.array([0.01, -0.01, 0.02])  # Fixed control torque
+X = X_0  # Reset initial conditions
+sigma_BN_100_history = []
+
+# Run integration with control torque for 100 seconds
+for t in range(int(100 / dt)):
+    sigma_BN_100_history.append(X[:3])
+    
+    # Update attitude using RK4
+    X = rk4_integrator(dynamics, X, u_fixed, dt)
+
+sigma_BN_100 = sigma_BN_100_history[-1]
+print(f"MRP attitude at 100s with control torque: {sigma_BN_100}")
+
+# Plot the results for visualization
+sigma_BN_history = np.array(sigma_BN_history)
+omega_BN_history = np.array(omega_BN_history)
+
+plt.figure(figsize=(12, 6))
+
+# Plot MRP attitude history
+plt.subplot(2, 1, 1)
+plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history)
+plt.title("MRP Attitude over Time")
+plt.xlabel("Time (s)")
+plt.ylabel("MRP Components")
+
+# Plot Angular velocity history
+plt.subplot(2, 1, 2)
+plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history)
+plt.title("Angular Velocity over Time")
+plt.xlabel("Time (s)")
+plt.ylabel("Angular Velocity (rad/s)")
+
+plt.tight_layout()
+plt.show()
