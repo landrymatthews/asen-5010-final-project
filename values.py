@@ -1,5 +1,5 @@
 import numpy as np
-from sympy import symbols, pprint, init_printing, cos, sin, Matrix, pi
+from sympy import symbols, pprint, cos, sin, Matrix, pi
 import sympy as sp
 
 # i_r points to s/c
@@ -8,7 +8,6 @@ import sympy as sp
 # antenna is in the direction of -b_1
 # mars_sensor is in direction of +b_1
 # solar panel normal is in direction of +b_3
-
 
 # Assume s/c can create any 3d control torque vector u
 # Sun is infinite distance away and always in the n_2 direction
@@ -23,7 +22,6 @@ import sympy as sp
 # This means -b_1 must point in direction of GMO
 
 # we will use solve_ivp to ensure use of RK45
-
 
 # # Function to evaluate current reference frame states (example, replace with actual evaluation)
 # def evaluate_reference_frame(tn):
@@ -75,11 +73,11 @@ import sympy as sp
 # save_states(Xn, u)
 
 
-# Project Tasks
+############################## Welcome ##############################
 print("Welcome to the ASEN 5010 Capstone Project")
 print("Attitude Dynamics and Control of a Nano-Satellite Orbiting Mars")
 
-# Initial state
+############################## Initial state ##############################
 h = 400  # km
 R_mars = 3396.19  # km
 r_lmo = R_mars + h
@@ -107,7 +105,7 @@ i_gmo = 0
 theta_gmo_0 = np.deg2rad(250)  # function of time
 
 
-# Helper Functions
+############################## Helper Functions ##############################
 def writeToFile(path, data):
     str_to_write = ""
     with open(path, "w+") as file:
@@ -137,6 +135,10 @@ def c(theta):
     return np.cos(theta)
 
 
+def tilde(v):
+    return np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+
+
 def Euler313toDCM(t1, t2, t3):
     # Convert 313 angles to DCM - From appendix B.1
     return np.array(
@@ -156,9 +158,103 @@ def Euler313toDCM(t1, t2, t3):
     )
 
 
+def DCM2Quaternion(C):
+    # Initialize stuff
+    B = np.zeros(4)  # B^2 array
+    b = np.zeros(4)  # resulting set of quaternions
+    trc = np.trace(C)
+
+    B[0] = (1 + trc) / 4
+    B[1] = (1 + 2 * C[0, 0] - trc) / 4
+    B[2] = (1 + 2 * C[1, 1] - trc) / 4
+    B[3] = (1 + 2 * C[2, 2] - trc) / 4
+
+    # Find the index of the maximum value in B2
+    i = np.argmax(B)
+
+    # Calculate quaternion based on sheppard's method
+    if i == 0:
+        b[0] = np.sqrt(B[0])
+        b[1] = C[1, 2] - C[2, 1]
+        b[2] = C[2, 0] - C[0, 2]
+        b[3] = C[0, 1] - C[1, 0]
+    elif i == 1:
+        b[1] = np.sqrt(B[1])
+        b[0] = C[1, 2] - C[2, 1]
+        if b[0] < 0:
+            b[1] = -b[1]
+            b[0] = -b[0]
+        b[2] = C[0, 1] + C[1, 0]
+        b[3] = C[2, 0] + C[0, 2]
+    elif i == 2:
+        b[2] = np.sqrt(B[2])
+        b[0] = C[2, 0] - C[0, 2]
+        if b[0] < 0:
+            b[2] = -b[2]
+            b[0] = -b[0]
+        b[1] = C[0, 1] + C[1, 0]
+        b[3] = C[1, 2] + C[2, 1]
+    elif i == 3:
+        b[3] = np.sqrt(B[3])
+        b[0] = C[0, 1] - C[1, 0]
+        if b[0] < 0:
+            b[3] = -b[3]
+            b[0] = -b[0]
+        b[1] = C[2, 0] + C[0, 2]
+        b[2] = C[1, 2] + C[2, 1]
+
+    # Apply divisor
+    factor = 1 / (4 * b[i])
+    b *= factor
+    b[i] /= factor  # undo this one as it was solved by sqrt
+    return b
+    # if i == 0:
+    #     b[0] = np.sqrt(B[0])
+    #     b[1] = (C[1, 2] - C[2, 1]) / (4 * b[0])
+    #     b[2] = (C[2, 0] - C[0, 2]) / (4 * b[0])
+    #     b[3] = (C[0, 1] - C[1, 0]) / (4 * b[0])
+    # elif i == 1:
+    #     b[1] = np.sqrt(B[1])
+    #     b[0] = (C[1, 2] - C[2, 1]) / (4 * b[1])
+    #     if b[0] < 0:
+    #         b[1] = -b[1]
+    #         b[0] = -b[0]
+    #     b[2] = (C[0, 1] + C[1, 0]) / (4 * b[1])
+    #     b[3] = (C[2, 0] + C[0, 2]) / (4 * b[1])
+    # elif i == 2:
+    #     b[2] = np.sqrt(B[2])
+    #     b[0] = (C[2, 0] - C[0, 2]) / (4 * b[2])
+    #     if b[0] < 0:
+    #         b[2] = -b[2]
+    #         b[0] = -b[0]
+    #     b[1] = (C[0, 1] + C[1, 0]) / (4 * b[2])
+    #     b[3] = (C[1, 2] + C[2, 1]) / (4 * b[2])
+    # elif i == 3:
+    #     b[3] = np.sqrt(B[3])
+    #     b[0] = (C[0, 1] - C[1, 0]) / (4 * b[3])
+    #     if b[0] < 0:
+    #         b[3] = -b[3]
+    #         b[0] = -b[0]
+    #     b[1] = (C[2, 0] + C[0, 2]) / (4 * b[3])
+    #     b[2] = (C[1, 2] + C[2, 1]) / (4 * b[3])
+
+
+def MRP2DCM(sigma):
+    tilde_sigma = tilde(sigma)
+    return np.eye(3) + (
+        8 * tilde_sigma @ tilde_sigma - 4 * (1 - sigma @ sigma) * tilde_sigma
+    ) / ((1 + sigma @ sigma) ** 2)
+
+
+def DCM2MRP(C):
+    b = DCM2Quaternion(C)
+    divisor = 1 + b[0]
+    return np.array([b[1], b[2], b[3]]) / divisor
+
+
 ############################## Task 1: Orbit Simulation (5 points) ##############################
 # pos = r*i_r
-# Derive inertial s/c velocity r_dot. 
+# Derive inertial s/c velocity r_dot.
 # Note that for circular orbits, theta_dot is constant
 print("\n\nBEGIN TASK 1")
 
@@ -371,112 +467,9 @@ writeToFile("./tasks/task 5/RcN.txt", RcN_at_t)
 writeToFile("./tasks/task 5/omega_rc_n_num.txt", omega_RcN_num_at_t)
 writeToFile("./tasks/task 5/omega_rc_n_anal.txt", omega_RcN_anal_at_t)
 
-# omega_tilde looks like this. note the diagonals are very small but not 0?
-# [[-6.06052074e-19 -1.90711903e-04 -2.05240054e-05]
-#  [ 1.90711903e-04 -6.23416249e-19 -1.49897809e-05]
-#  [ 2.05240054e-05  1.49897809e-05 -9.79381845e-22]]
-
 
 ############################## Task 6: Attitude Error Evaluation (10 points) ##############################
 print("\n\nBEGIN TASK 6")
-
-
-def DCM2Quaternion(C):
-    # Initialize stuff
-    B = np.zeros(4)  # B^2 array
-    b = np.zeros(4)  # resulting set of quaternions
-    trc = np.trace(C)
-
-    B[0] = (1 + trc) / 4
-    B[1] = (1 + 2 * C[0, 0] - trc) / 4
-    B[2] = (1 + 2 * C[1, 1] - trc) / 4
-    B[3] = (1 + 2 * C[2, 2] - trc) / 4
-
-    # Find the index of the maximum value in B2
-    i = np.argmax(B)
-
-    # Calculate quaternion based on sheppard's method
-    if i == 0:
-        b[0] = np.sqrt(B[0])
-        b[1] = C[1, 2] - C[2, 1]
-        b[2] = C[2, 0] - C[0, 2]
-        b[3] = C[0, 1] - C[1, 0]
-    elif i == 1:
-        b[1] = np.sqrt(B[1])
-        b[0] = C[1, 2] - C[2, 1]
-        if b[0] < 0:
-            b[1] = -b[1]
-            b[0] = -b[0]
-        b[2] = C[0, 1] + C[1, 0]
-        b[3] = C[2, 0] + C[0, 2]
-    elif i == 2:
-        b[2] = np.sqrt(B[2])
-        b[0] = C[2, 0] - C[0, 2]
-        if b[0] < 0:
-            b[2] = -b[2]
-            b[0] = -b[0]
-        b[1] = C[0, 1] + C[1, 0]
-        b[3] = C[1, 2] + C[2, 1]
-    elif i == 3:
-        b[3] = np.sqrt(B[3])
-        b[0] = C[0, 1] - C[1, 0]
-        if b[0] < 0:
-            b[3] = -b[3]
-            b[0] = -b[0]
-        b[1] = C[2, 0] + C[0, 2]
-        b[2] = C[1, 2] + C[2, 1]
-
-    # Apply divisor
-    factor = 1 / (4 * b[i])
-    b *= factor
-    b[i] /= factor  # undo this one as it was solved by sqrt
-    return b
-    # if i == 0:
-    #     b[0] = np.sqrt(B[0])
-    #     b[1] = (C[1, 2] - C[2, 1]) / (4 * b[0])
-    #     b[2] = (C[2, 0] - C[0, 2]) / (4 * b[0])
-    #     b[3] = (C[0, 1] - C[1, 0]) / (4 * b[0])
-    # elif i == 1:
-    #     b[1] = np.sqrt(B[1])
-    #     b[0] = (C[1, 2] - C[2, 1]) / (4 * b[1])
-    #     if b[0] < 0:
-    #         b[1] = -b[1]
-    #         b[0] = -b[0]
-    #     b[2] = (C[0, 1] + C[1, 0]) / (4 * b[1])
-    #     b[3] = (C[2, 0] + C[0, 2]) / (4 * b[1])
-    # elif i == 2:
-    #     b[2] = np.sqrt(B[2])
-    #     b[0] = (C[2, 0] - C[0, 2]) / (4 * b[2])
-    #     if b[0] < 0:
-    #         b[2] = -b[2]
-    #         b[0] = -b[0]
-    #     b[1] = (C[0, 1] + C[1, 0]) / (4 * b[2])
-    #     b[3] = (C[1, 2] + C[2, 1]) / (4 * b[2])
-    # elif i == 3:
-    #     b[3] = np.sqrt(B[3])
-    #     b[0] = (C[0, 1] - C[1, 0]) / (4 * b[3])
-    #     if b[0] < 0:
-    #         b[3] = -b[3]
-    #         b[0] = -b[0]
-    #     b[1] = (C[2, 0] + C[0, 2]) / (4 * b[3])
-    #     b[2] = (C[1, 2] + C[2, 1]) / (4 * b[3])
-
-
-def tilde(v):
-    return np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
-
-
-def MRP2DCM(sigma):
-    tilde_sigma = tilde(sigma)
-    return np.eye(3) + (
-        8 * tilde_sigma @ tilde_sigma - 4 * (1 - sigma @ sigma) * tilde_sigma
-    ) / ((1 + sigma @ sigma) ** 2)
-
-
-def DCM2MRP(C):
-    b = DCM2Quaternion(C)
-    divisor = 1 + b[0]
-    return np.array([b[1], b[2], b[3]]) / divisor
 
 
 # Write function that returns tracking errors sigma_br and omega_br
@@ -496,19 +489,19 @@ result = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRsN(), getOmegaRsN())
 print("\nSun-Pointing Orientation")
 print("σ_B/R = ", result[0])
 print("ω_B/R = ", result[1])
-writeToFile('./tasks/task 6/sun-sigma.txt', result[0])
-writeToFile('./tasks/task 6/sun-omega.txt', result[1])
+writeToFile("./tasks/task 6/sun-sigma.txt", result[0])
+writeToFile("./tasks/task 6/sun-omega.txt", result[1])
 
 result = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRnN(t), getOmegaRnN(t))
 print("\nNadir-Pointing Orientation")
 print("σ_B/R = ", result[0])
 print("ω_B/R = ", result[1])
-writeToFile('./tasks/task 6/nad-sigma.txt', result[0])
-writeToFile('./tasks/task 6/nad-omega.txt', result[1])
+writeToFile("./tasks/task 6/nad-sigma.txt", result[0])
+writeToFile("./tasks/task 6/nad-omega.txt", result[1])
 
 result = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRcN(t), getOmegaRcN(t))
 print("\nGMO-Pointing Orientation")
 print("σ_B/R = ", result[0])
 print("ω_B/R = ", result[1])
-writeToFile('./tasks/task 6/gmo-sigma.txt', result[0])
-writeToFile('./tasks/task 6/gmo-omega.txt', result[1])
+writeToFile("./tasks/task 6/gmo-sigma.txt", result[0])
+writeToFile("./tasks/task 6/gmo-omega.txt", result[1])
