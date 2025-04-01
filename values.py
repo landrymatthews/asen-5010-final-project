@@ -97,7 +97,7 @@ sigma_bn_0 = np.array([0.3, -0.4, 0.5])  # MRPs
 omega_bn_0 = np.array([1.00, 1.75, -2.20])  # deg/s
 I_b = np.array([[10, 0, 0], [0, 5, 0], [0, 0, 7.5]])  # kg*m^2
 I_b_inv = np.linalg.inv(I_b)
-X_0 = [sigma_bn_0, omega_bn_0]  # Initial conditions
+X_0 = np.concatenate((sigma_bn_0, omega_bn_0))  # Initial conditions
 omega_lmo = np.deg2rad(20)
 i_lmo = np.deg2rad(30)
 theta_lmo_0 = np.deg2rad(60)  # function of time
@@ -176,68 +176,35 @@ def DCM2Quaternion(C):
     # Calculate quaternion based on sheppard's method
     if i == 0:
         b[0] = np.sqrt(B[0])
-        b[1] = C[1, 2] - C[2, 1]
-        b[2] = C[2, 0] - C[0, 2]
-        b[3] = C[0, 1] - C[1, 0]
+        b[1] = (C[1, 2] - C[2, 1]) / (4 * b[0])
+        b[2] = (C[2, 0] - C[0, 2]) / (4 * b[0])
+        b[3] = (C[0, 1] - C[1, 0]) / (4 * b[0])
     elif i == 1:
         b[1] = np.sqrt(B[1])
-        b[0] = C[1, 2] - C[2, 1]
+        b[0] = (C[1, 2] - C[2, 1]) / (4 * b[1])
         if b[0] < 0:
             b[1] = -b[1]
             b[0] = -b[0]
-        b[2] = C[0, 1] + C[1, 0]
-        b[3] = C[2, 0] + C[0, 2]
+        b[2] = (C[0, 1] + C[1, 0]) / (4 * b[1])
+        b[3] = (C[2, 0] + C[0, 2]) / (4 * b[1])
     elif i == 2:
         b[2] = np.sqrt(B[2])
-        b[0] = C[2, 0] - C[0, 2]
+        b[0] = (C[2, 0] - C[0, 2]) / (4 * b[2])
         if b[0] < 0:
             b[2] = -b[2]
             b[0] = -b[0]
-        b[1] = C[0, 1] + C[1, 0]
-        b[3] = C[1, 2] + C[2, 1]
+        b[1] = (C[0, 1] + C[1, 0]) / (4 * b[2])
+        b[3] = (C[1, 2] + C[2, 1]) / (4 * b[2])
     elif i == 3:
         b[3] = np.sqrt(B[3])
-        b[0] = C[0, 1] - C[1, 0]
+        b[0] = (C[0, 1] - C[1, 0]) / (4 * b[3])
         if b[0] < 0:
             b[3] = -b[3]
             b[0] = -b[0]
-        b[1] = C[2, 0] + C[0, 2]
-        b[2] = C[1, 2] + C[2, 1]
+        b[1] = (C[2, 0] + C[0, 2]) / (4 * b[3])
+        b[2] = (C[1, 2] + C[2, 1]) / (4 * b[3])
 
-    # Apply divisor
-    factor = 1 / (4 * b[i])
-    b *= factor
-    b[i] /= factor  # undo this one as it was solved by sqrt
     return b
-    # if i == 0:
-    #     b[0] = np.sqrt(B[0])
-    #     b[1] = (C[1, 2] - C[2, 1]) / (4 * b[0])
-    #     b[2] = (C[2, 0] - C[0, 2]) / (4 * b[0])
-    #     b[3] = (C[0, 1] - C[1, 0]) / (4 * b[0])
-    # elif i == 1:
-    #     b[1] = np.sqrt(B[1])
-    #     b[0] = (C[1, 2] - C[2, 1]) / (4 * b[1])
-    #     if b[0] < 0:
-    #         b[1] = -b[1]
-    #         b[0] = -b[0]
-    #     b[2] = (C[0, 1] + C[1, 0]) / (4 * b[1])
-    #     b[3] = (C[2, 0] + C[0, 2]) / (4 * b[1])
-    # elif i == 2:
-    #     b[2] = np.sqrt(B[2])
-    #     b[0] = (C[2, 0] - C[0, 2]) / (4 * b[2])
-    #     if b[0] < 0:
-    #         b[2] = -b[2]
-    #         b[0] = -b[0]
-    #     b[1] = (C[0, 1] + C[1, 0]) / (4 * b[2])
-    #     b[3] = (C[1, 2] + C[2, 1]) / (4 * b[2])
-    # elif i == 3:
-    #     b[3] = np.sqrt(B[3])
-    #     b[0] = (C[0, 1] - C[1, 0]) / (4 * b[3])
-    #     if b[0] < 0:
-    #         b[3] = -b[3]
-    #         b[0] = -b[0]
-    #     b[1] = (C[2, 0] + C[0, 2]) / (4 * b[3])
-    #     b[2] = (C[1, 2] + C[2, 1]) / (4 * b[3])
 
 
 def MRP2DCM(sigma):
@@ -501,6 +468,11 @@ def getTrackingErrors(t, sigma_bn, B_omega_bn, RN, N_omega_rn):
     sigma_br = DCM2MRP(BR)
 
     # Get ω_br from ω_bn and ω_rn
+    print("\nheres BN: ", BN)
+    print("heres B_omega_bn: ", B_omega_bn)
+    print("heres N_omega_rn: ", N_omega_rn)
+    print("heres B_omega_rn: ", BN @ N_omega_rn)
+    print("\n")
     B_omega_br = B_omega_bn - (BN @ N_omega_rn)
 
     return sigma_br, B_omega_br
@@ -540,116 +512,118 @@ print("\n\nBEGIN TASK 7")
 # Write your own numerical integrator using RK45
 
 # Constants for inertia matrix (for simplicity, assuming a diagonal matrix)
-I_b = I_b
-X_0 = X_0
-# Define the skew-symmetric matrix of a vector
-def skew(v):
-    return np.array([[0, -v[2], v[1]],
-                     [v[2], 0, -v[0]],
-                     [-v[1], v[0], 0]])
 
 # Define the spacecraft dynamics (equation of motion)
-def dynamics(X, u):
-    sigma_BN = X[:3]  # MRP attitude
-    omega_BN = X[3:]  # Angular velocity
-    omega_BN_skew = skew(omega_BN)
+# def dynamics(X, u):
+#     sigma_BN = X[:3]  # MRP attitude
+#     omega_BN = X[3:]  # Angular velocity
+#     omega_BN_skew = tilde(omega_BN)
     
-    # Equation of motion
-    d_omega_BN = -np.dot(omega_BN_skew, I @ omega_BN) + u
-    return np.concatenate((d_sigma_BN(sigma_BN, omega_BN), d_omega_BN))
+#     # Equation of motion
+#     d_omega_BN = -np.dot(omega_BN_skew, I_b @ omega_BN) + u
+#     return np.concatenate((d_sigma_BN(sigma_BN, omega_BN), d_omega_BN))
 
-# MRP kinematics
-def d_sigma_BN(sigma_BN, omega_BN):
-    # MRP update equations (for simplicity assume small angles)
-    sigma_dot = 0.5 * (np.eye(3) - skew(sigma_BN)) @ omega_BN
-    return sigma_dot
+# # MRP kinematics
+# def d_sigma_BN(sigma_BN, omega_BN):
+#     # MRP update equations (for simplicity assume small angles)
+#     sigma_dot = 0.5 * (np.eye(3) - tilde(sigma_BN)) @ omega_BN
+#     return sigma_dot
 
-# Runge-Kutta 4th order integrator
-def rk4_integrator(f, X, u, dt):
-    k1 = f(X, u)
-    k2 = f(X + 0.5 * dt * k1, u)
-    k3 = f(X + 0.5 * dt * k2, u)
-    k4 = f(X + dt * k3, u)
-    return X + (dt / 6) * (k1 + 2*k2 + 2*k3 + k4)
+# # Runge-Kutta 4th order integrator
+# def rk4_integrator(f, X, u, dt):
+#     k1 = f(X, u)
+#     k2 = f(X + 0.5 * dt * k1, u)
+#     k3 = f(X + 0.5 * dt * k2, u)
+#     k4 = f(X + dt * k3, u)
+#     return X + (dt / 6) * (k1 + 2*k2 + 2*k3 + k4)
 
-# Initial conditions (assuming initial angular velocity and MRP are zero)
+# # Initial conditions (assuming initial angular velocity and MRP are zero)
 
-# Time settings
-dt = 1e-6  # 1 second time step
-t_final = 500.0  # Total time for the integration
-time_steps = int(t_final / dt)
+# # Time settings
+# dt = 1e-1  # 1 second time step
+# t_final = 100.0  # Total time for the integration
+# time_steps = int(t_final / dt)
 
-# Control torque (zero initially)
-u = np.zeros(3)  # Control torque vector
+# # Control torque (zero initially)
+# u = np.zeros(3)  # Control torque vector
 
-# Arrays to store results for plotting
-sigma_BN_history = []
-omega_BN_history = []
-T_history = []
-H_history = []
+# # Arrays to store results for plotting
+# sigma_BN_history = []
+# omega_BN_history = []
+# T_history = []
+# H_history = []
 
-# Integration loop (u = 0 for this part)
-X = X_0
-for t in range(time_steps):
-    sigma_BN_history.append(X[:3])
-    omega_BN_history.append(X[3:])
+# # Integration loop (u = 0 for this part)
+# X = X_0
+# print(X)
+# for t in range(time_steps):
+#     sigma_BN_history.append(X[:3])
+#     omega_BN_history.append(X[3:])
     
-    # Compute rotational kinetic energy T
-    T = 0.5 * np.dot(X[3:], I @ X[3:])
-    T_history.append(T)
+#     # Compute rotational kinetic energy T
+#     print(X[3:])
+#     T = 0.5 * np.dot(X[3:], I_b @ X[3:])
+#     T_history.append(T)
     
-    # Compute angular momentum H
-    H = I_b @ X[3:]
-    H_history.append(H)
+#     # Compute angular momentum H
+#     H = I_b @ X[3:]
+#     H_history.append(H)
     
-    # Update attitude using RK4
-    X = rk4_integrator(dynamics, X, u, dt)
+#     # Update attitude using RK4
+#     X = rk4_integrator(dynamics, X, u, dt)
 
-# Results at 500 seconds
-sigma_BN_500 = sigma_BN_history[-1]
-omega_BN_500 = omega_BN_history[-1]
-T_500 = T_history[-1]
-H_500 = H_history[-1]
+# # Results at 500 seconds
+# sigma_BN_500 = sigma_BN_history[-1]
+# omega_BN_500 = omega_BN_history[-1]
+# T_500 = T_history[-1]
+# H_500 = H_history[-1]
 
-print(f"MRP attitude at 500s: {sigma_BN_500}")
-print(f"Angular velocity at 500s: {omega_BN_500}")
-print(f"Rotational kinetic energy at 500s: {T_500}")
-print(f"Angular momentum at 500s: {H_500}")
+# print(f"MRP attitude at 500s: {sigma_BN_500}")
+# print(f"Angular velocity at 500s: {omega_BN_500}")
+# print(f"Rotational kinetic energy at 500s: {T_500}")
+# print(f"Angular momentum at 500s: {H_500}")
 
-# Now apply control torque u = (0.01, -0.01, 0.02) Nm and integrate again for 100s
-u_fixed = np.array([0.01, -0.01, 0.02])  # Fixed control torque
-X = X_0  # Reset initial conditions
-sigma_BN_100_history = []
+# # Now apply control torque u = (0.01, -0.01, 0.02) Nm and integrate again for 100s
+# u_fixed = np.array([0.01, -0.01, 0.02])  # Fixed control torque
+# X = X_0  # Reset initial conditions
+# sigma_BN_100_history = []
 
-# Run integration with control torque for 100 seconds
-for t in range(int(100 / dt)):
-    sigma_BN_100_history.append(X[:3])
+# # Run integration with control torque for 100 seconds
+# for t in range(int(100 / dt)):
+#     sigma_BN_100_history.append(X[:3])
     
-    # Update attitude using RK4
-    X = rk4_integrator(dynamics, X, u_fixed, dt)
+#     # Update attitude using RK4
+#     X = rk4_integrator(dynamics, X, u_fixed, dt)
 
-sigma_BN_100 = sigma_BN_100_history[-1]
-print(f"MRP attitude at 100s with control torque: {sigma_BN_100}")
+# sigma_BN_100 = sigma_BN_100_history[-1]
+# print(f"MRP attitude at 100s with control torque: {sigma_BN_100}")
 
-# Plot the results for visualization
-sigma_BN_history = np.array(sigma_BN_history)
-omega_BN_history = np.array(omega_BN_history)
+# # Plot the results for visualization
+# sigma_BN_history = np.array(sigma_BN_history)
+# omega_BN_history = np.array(omega_BN_history)
 
-plt.figure(figsize=(12, 6))
+# plt.subplots(figsize=(12, 6))
 
-# Plot MRP attitude history
-plt.subplot(2, 1, 1)
-plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history)
-plt.title("MRP Attitude over Time")
-plt.xlabel("Time (s)")
-plt.ylabel("MRP Components")
+# # Plot MRP attitude history
+# plt.subplot(2, 1, 1)
+# plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history[:, 0], label=r'$\sigma_1$')
+# plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history[:,1], label=r'$\sigma_2$')
+# plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history[:,2], label=r'$\sigma_3$')
+# plt.title("MRP Attitude over Time")
+# plt.xlabel("Time (s)")
+# plt.ylabel("MRP Components")
+# plt.legend()
 
-# Plot Angular velocity history
-plt.subplot(2, 1, 2)
-plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history)
-plt.title("Angular Velocity over Time")
-plt.xlabel("Time (s)")
-plt.ylabel("Angular Velocity (rad/s)")
+# # Plot Angular velocity history
+# plt.subplot(2, 1, 2)
+# plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history[:,0], label=r'$\omega_1$')
+# plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history[:,1], label=r'$\omega_1$')
+# plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history[:,2], label=r'$\omega_1$')
 
-plt.tight_layout()
-plt.show()
+# plt.title("Angular Velocity over Time")
+# plt.xlabel("Time (s)")
+# plt.ylabel("Angular Velocity (rad/s)")
+# plt.legend()
+
+# plt.tight_layout()
+# plt.show()
