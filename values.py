@@ -469,11 +469,6 @@ def getTrackingErrors(t, sigma_bn, B_omega_bn, RN, N_omega_rn):
     sigma_br = DCM2MRP(BR)
 
     # Get ω_br from ω_bn and ω_rn
-    print("\nheres BN: ", BN)
-    print("heres B_omega_bn: ", B_omega_bn)
-    print("heres N_omega_rn: ", N_omega_rn)
-    print("heres B_omega_rn: ", BN @ N_omega_rn)
-    print("\n")
     B_omega_br = B_omega_bn - (BN @ N_omega_rn)
 
     return sigma_br, B_omega_br
