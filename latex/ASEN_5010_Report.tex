@@ -1,0 +1,187 @@
+
+\documentclass[conf]{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{authblk}
+\usepackage[version=4]{mhchem}
+\usepackage{siunitx}
+\usepackage{longtable,tabularx}
+\setlength\LTleft{0pt}
+
+\title{Attitude Dynamics and Control of a Nano-Satellite Orbiting Mars}
+
+\author{Landry Matthews\footnote{Graduate Student, Aerospace Engineering Sciences, University of Colorado Boulder.}}
+\affil{University of Colorado Boulder, Boulder, CO, 80309}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document outlines the work completed for Tasks 1 through 6 of the ASEN 5010 Capstone Project. These tasks focus on simulating and analyzing the orbit and attitude dynamics of a nano-satellite in Mars orbit. Results are derived using a Python-based simulation framework and validated through analytical and numerical approaches.
+\end{abstract}
+
+\section*{Introduction}
+The project involves a nano-satellite in a circular Low Mars Orbit (LMO), performing various attitude maneuvers depending on whether it is in sunlit, communication, or science mode. The satellite must align its body-fixed reference frames accordingly using different pointing strategies such as sun-pointing, nadir-pointing, or GMO (Geostationary Mars Orbit) mothership communication alignment. Each of the following tasks contributes to a component of this overall attitude control simulation.
+\newpage
+\section{Task 1: Orbit Simulation}
+Using circular orbital dynamics, the inertial position and velocity vectors of the satellite are computed. The Python implementation utilizes a function \texttt{orbit\_sim()} that takes orbital elements and uses a 3-1-3 Euler rotation sequence to convert to inertial coordinates. The directional cosine matrix (DCM) is calculated via the function \texttt{Euler313toDCM()}.
+
+\subsection*{LMO at $t = 450$ s}
+\[
+\vec{r}_{LMO} = 
+\begin{bmatrix}
+-669.29 \\ 3227.50 \\ 1883.18
+\end{bmatrix} \quad \text{(km)}, \quad
+\vec{v}_{LMO} = 
+\begin{bmatrix}
+-3.256 \\ -0.798 \\ 0.210
+\end{bmatrix} \quad \text{(km/s)}
+\]
+
+\subsection*{GMO at $t = 1150$ s}
+\[
+\vec{r}_{GMO} = 
+\begin{bmatrix}
+-5399.15 \\ -19697.64 \\ 0.0
+\end{bmatrix} \quad \text{(km)}, \quad
+\vec{v}_{GMO} = 
+\begin{bmatrix}
+1.397 \\ -0.383 \\ 0.0
+\end{bmatrix} \quad \text{(km/s)}
+\]
+
+\section{Task 2: Orbit Frame Orientation}
+This task calculates the orientation of the orbit frame \textit{O} with respect to the inertial frame \textit{N}. The transformation is done through a 3-1-3 Euler angle sequence using symbolic algebra in SymPy to represent $\theta(t)$, the true anomaly as a function of time. The DCM $[HN]$ is computed and evaluated at $t = 300$ s.
+
+\[
+HN(t = 300s) = 
+\begin{bmatrix}
+-0.0465 & 0.8741 & 0.4834 \\
+-0.9842 & -0.1229 & 0.1277 \\
+0.1710 & -0.4698 & 0.8660
+\end{bmatrix}
+\]
+
+\section{Task 3: Sun-Pointing Reference Frame Orientation}
+When the spacecraft is on the sunlit side (positive $\hat{n_2}$ coordinate), it must align its +$\hat{b_3}$ axis (solar panel normal) with the sun, assumed to be in the +$\hat{n_2}$ direction. To build an orthonormal frame, the -$\hat{n_1}$ axis is used to define +$\hat{b_1}$.
+
+\[
+R_sN(t = 0s) = 
+\begin{bmatrix}
+-1 & 0 & 0 \\
+0 & 0 & 1 \\
+0 & 1 & 0
+\end{bmatrix}, \quad
+\vec{\omega}_{Rs/N} = 
+\begin{bmatrix}
+0 \\ 0 \\ 0
+\end{bmatrix}
+\]
+
+\section{Task 4: Nadir-Pointing Reference Frame Orientation}
+In science mode on the shadowed side of Mars, the satellite must point its sensor (+$\hat{b_1}$) directly toward the nadir direction (toward Mars center). The reference frame is constructed from the relative position vector and the local orbit track direction.
+
+\[
+R_nN(t = 330s) = 
+\begin{bmatrix}
+0.0726 & -0.8706 & -0.4866 \\
+-0.9826 & -0.1461 & 0.1148 \\
+-0.1710 & 0.4698 & -0.8660
+\end{bmatrix}, \quad
+\vec{\omega}_{R_n/N} = 
+\begin{bmatrix}
+0.000151 \\ -0.000416 \\ 0.000766
+\end{bmatrix}
+\]
+
+\section{Task 5: GMO-Pointing Reference Frame Orientation}
+In communication mode, the satellite aligns its -b\textsubscript{1} (antenna direction) with the direction of the GMO mothership. The relative vector between the spacecraft and GMO is used to compute the DCM $R_cN$, and angular velocity $\omega_{R_c/N}$ is evaluated both analytically and numerically for verification.
+
+\[
+R_cN =
+\begin{bmatrix}
+0.2655 & 0.9609 & 0.0784 \\
+-0.9639 & 0.2663 & 0.0 \\
+-0.0209 & -0.0755 & 0.9969
+\end{bmatrix}
+\]
+
+\[
+\omega_{R_c/N} (\text{Numerical}) =
+\begin{bmatrix}
+1.978 \times 10^{-5} \\
+-5.465 \times 10^{-6} \\
+1.913 \times 10^{-4}
+\end{bmatrix}, \quad
+\omega_{R_c/N} (\text{Analytical}) =
+\begin{bmatrix}
+1.978 \times 10^{-5} \\
+-5.465 \times 10^{-6} \\
+1.913 \times 10^{-4}
+\end{bmatrix}
+\]
+
+\section{Task 6: Attitude Error Evaluation}
+Attitude error is evaluated using Modified Rodrigues Parameters (MRPs) and relative angular velocity between the body frame and reference frames. These are computed using functions like \texttt{DCM2MRP} and vector subtraction logic in \texttt{values.py}.
+
+\subsection*{Sun-Pointing}
+\[
+\sigma_{B/R} =
+\begin{bmatrix}
+-0.7754 \\ -0.4739 \\ 0.0431
+\end{bmatrix}, \quad
+\omega_{B/R} =
+\begin{bmatrix}
+0.01745 \\ 0.03054 \\ -0.03840
+\end{bmatrix}
+\]
+
+\subsection*{Nadir-Pointing}
+\[
+\sigma_{B/R} =
+\begin{bmatrix}
+0.2623 \\ 0.5547 \\ 0.0394
+\end{bmatrix}, \quad
+\omega_{B/R} =
+\begin{bmatrix}
+0.01685 \\ 0.03093 \\ -0.03892
+\end{bmatrix}
+\]
+
+\subsection*{GMO-Pointing}
+\[
+\sigma_{B/R} =
+\begin{bmatrix}
+0.0170 \\ -0.3828 \\ 0.2076
+\end{bmatrix}, \quad
+\omega_{B/R} =
+\begin{bmatrix}
+0.01730 \\ 0.03066 \\ -0.03844
+\end{bmatrix}
+\]
+
+\section{Task 7: Numerical Attitude Simulator}
+\vspace{1em}
+\textit{[Placeholder for Task 7 results.]}
+
+\section{Task 8: Sun Pointing Control}
+\vspace{1em}
+\textit{[Placeholder for Task 8 results.]}
+
+\section{Task 9: Nadir Poniting Control}
+\vspace{1em}
+\textit{[Placeholder for Task 9 results.]}
+
+\section{Task 10: GMO Pointing Control}
+\vspace{1em}
+\textit{[Placeholder for Task 10 results.]}
+
+\section{Task 11: Mission Scenario Simulation}
+\vspace{1em}
+\textit{[Placeholder for Task 11 results.]}
+
+\section{Conclusion}
+This report presents a comprehensive simulation of a nano-satellite’s orbit and attitude dynamics around Mars. Tasks 1-11 have been implemented and validated using a custom Python script. 
+
+\end{document}
