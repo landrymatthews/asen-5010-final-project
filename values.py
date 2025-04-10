@@ -95,9 +95,10 @@ dt = 0.1  # Set the value of Δt
 t_0 = 0.0  # Initial time
 sigma_bn_0 = np.array([0.3, -0.4, 0.5])  # MRPs
 omega_bn_0 = np.array([1.00, 1.75, -2.20])  # deg/s
+omega_bn_0_rad = np.deg2rad(omega_bn_0)
 I_b = np.array([[10, 0, 0], [0, 5, 0], [0, 0, 7.5]])  # kg*m^2
 I_b_inv = np.linalg.inv(I_b)
-X_0 = np.concatenate((sigma_bn_0, omega_bn_0))  # Initial conditions
+X_0 = np.concatenate((sigma_bn_0, omega_bn_0_rad))  # Initial conditions
 omega_lmo = np.deg2rad(20)
 i_lmo = np.deg2rad(30)
 theta_lmo_0 = np.deg2rad(60)  # function of time
@@ -480,7 +481,7 @@ def getTrackingErrors(t, sigma_bn, B_omega_bn, RN, N_omega_rn):
 
 # Sun-pointing
 t = 0
-sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRsN(), getOmegaRsN())
+sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0_rad, getRsN(), getOmegaRsN())
 print("Sun-Pointing Orientation")
 print("σ_B/R = ", sigma)
 print("ω_B/R = ", omega)
@@ -488,7 +489,7 @@ writeToFile("./tasks/task 6/sun-sigma.txt", sigma)
 writeToFile("./tasks/task 6/sun-omega.txt", omega)
 
 # Nadir-pointing
-sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRnN(t), getOmegaRnN(t))
+sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0_rad, getRnN(t), getOmegaRnN(t))
 print("Nadir-Pointing Orientation")
 print("σ_B/R = ", sigma)
 print("ω_B/R = ", omega)
@@ -496,7 +497,7 @@ writeToFile("./tasks/task 6/nad-sigma.txt", sigma)
 writeToFile("./tasks/task 6/nad-omega.txt", omega)
 
 # GMO-pointing
-sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0, getRcN(t), getOmegaRcN(t))
+sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0_rad, getRcN(t), getOmegaRcN(t))
 print("GMO-Pointing Orientation")
 print("σ_B/R = ", sigma)
 print("ω_B/R = ", omega)
