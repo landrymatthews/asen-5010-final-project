@@ -22,56 +22,6 @@ import matplotlib.pyplot as plt
 # In COMM mode, LMO and GMO position vectors have angular difference of <35 degrees
 # This means -b_1 must point in direction of GMO
 
-# we will use solve_ivp to ensure use of RK45
-
-# # Function to evaluate current reference frame states (example, replace with actual evaluation)
-# def evaluate_reference_frame(tn):
-#     # Replace with actual logic to compute RN(t), NωR/N(t), etc.
-#     return RN, omega_rn
-
-# # Function to calculate control tracking errors (example)
-# def control_tracking_errors():
-#     # Replace with actual logic to compute σB/R and BωB/R
-#     return sigma_br, omega_br
-
-# # Function to determine control solution (example)
-# def control_solution():
-#     # Replace with actual logic to determine control solution u
-#     return u
-
-# # Function to compute the differential (replace with your differential equation model)
-# def f(Xn, t_n, u):
-#     # Replace with actual system dynamics function for f(Xn, tn, u)
-#     return Xn
-
-# # Run the time-stepping loop
-# X_n = X_0  # Initialize the state
-# t_n = t_0
-# sigma_bn = sigma_bn_0
-# omega_bn = omega_bn_0
-# while t_n < tmax:
-#     if new_control_required():
-#         # If new control is required, evaluate reference frame states and control tracking errors
-#         RN_t, NωR_N_t = evaluate_reference_frame(tn)
-#         σB_R, BωB_R = control_tracking_errors()
-#         u = control_solution()
-
-#     # Run the 4th order Runge-Kutta integration
-#     k1 = dt * f(X_n, t_n, u)
-#     k2 = dt * f([X_n + k1/2], t_n + dt/2, u)
-#     k3 = dt * f([X_n + k2/2], t_n + dt/2, u)
-#     k4 = dt * f([X_n + k3], t_n + dt, u)
-#     X_n = [X_n + (1/6)*(k1 + 2*k2 + 2*k3 + k4)] # Update the state
-
-#     # Check for control error and map to shadow set if necessary
-#     if abs(sigma_bn) > 1:
-#         # Map σB/N to shadow set
-#         pass
-
-#     # Update time and save states
-#     tn += Δt
-# Save spacecraft states Xn and u (you can save this to a file or list as needed)
-# save_states(Xn, u)
 
 
 ############################## Welcome ##############################
@@ -99,18 +49,22 @@ omega_bn_0_rad = np.deg2rad(omega_bn_0)
 I_b = np.array([[10, 0, 0], [0, 5, 0], [0, 0, 7.5]])  # kg*m^2
 I_b_inv = np.linalg.inv(I_b)
 X_0 = np.concatenate((sigma_bn_0, omega_bn_0_rad))  # Initial conditions
-omega_lmo = np.deg2rad(20)
-i_lmo = np.deg2rad(30)
+omega_lmo_0 = np.deg2rad(20)
+i_lmo_0 = np.deg2rad(30)
 theta_lmo_0 = np.deg2rad(60)  # function of time
-omega_gmo = 0
-i_gmo = 0
+omega_gmo_0 = 0
+i_gmo_0 = 0
 theta_gmo_0 = np.deg2rad(250)  # function of time
-
+comm_angle_threshold = 35 # deg
 
 ############################## Helper Functions ##############################
 def writeToFile(path, data):
     str_to_write = ""
-    with open(path, "w+") as file:
+
+    # Convert scalar to list
+    if np.isscalar(data):
+        str_to_write = str(data)
+    else:
         if data.ndim == 2:
             for row in data:
                 for element in row:
@@ -118,8 +72,8 @@ def writeToFile(path, data):
         else:
             for element in data:
                 str_to_write += str(element) + " "
+    with open(path, "w+") as file:
         file.write(str_to_write.rstrip())
-
 
 def theta_lmo(t):
     return theta_lmo_0 + t * theta_lmo_rate
@@ -254,8 +208,8 @@ def orbit_sim(r, omega, i, theta):
 
 # confirm the operation by checking orbit_sim(r_lmo, omega_lmo, i_lmo, theta_lmo(450))
 # and orbit_sim(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
-N_r_lmo, N_r_lmo_dot = orbit_sim(r_lmo, omega_lmo, i_lmo, theta_lmo(450))
-N_r_gmo, N_r_gmo_dot = orbit_sim(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
+N_r_lmo, N_r_lmo_dot = orbit_sim(r_lmo, omega_lmo_0, i_lmo_0, theta_lmo(450))
+N_r_gmo, N_r_gmo_dot = orbit_sim(r_gmo, omega_gmo_0, i_gmo_0, theta_gmo(1150))
 print("rLMO = ", N_r_lmo)
 print("vLMO = ", N_r_lmo_dot)
 print("rGMO = ", N_r_gmo)
@@ -292,7 +246,7 @@ with open('./latex/task_2_HN.tex', "w+") as file:
 
 # Write a function whose input is time t and output is DCM HN(t) for the LMO
 def getHNforLMO(t):
-    return Euler313toDCM(omega_lmo, i_lmo, theta_lmo(t))
+    return Euler313toDCM(omega_lmo_0, i_lmo_0, theta_lmo(t))
 
 
 # Validate the operation by computing HN(300)
@@ -371,8 +325,8 @@ def getRcNExpr():
     NH = HN.T
     theta_gmo_expr = sp.Function(symbols("theta_GMO"))
     theta_lmo_expr = sp.Function(symbols("theta_LMO"))
-    NH_gmo = NH.subs([(Omega, omega_gmo), (i, i_gmo), (theta, theta_gmo_expr)])
-    NH_lmo = NH.subs([(Omega, omega_lmo), (i, i_lmo), (theta, theta_lmo_expr)])
+    NH_gmo = NH.subs([(Omega, omega_gmo_0), (i, i_gmo_0), (theta, theta_gmo_expr)])
+    NH_lmo = NH.subs([(Omega, omega_lmo_0), (i, i_lmo_0), (theta, theta_lmo_expr)])
     N_r_gmo_col = NH_gmo @ sp.Matrix([r_gmo, 0, 0])
     N_r_lmo_col = NH_lmo @ sp.Matrix([r_lmo, 0, 0])
 
@@ -502,124 +456,519 @@ writeToFile("./tasks/task 6/gmo-omega.txt", omega)
 
 
 
-############################## Numerical Attitude Simulator (10 points) ##############################
+############################## Task 7: Numerical Attitude Simulator (10 points) ##############################
 print("\n\nBEGIN TASK 7")
+# # Function to evaluate current reference frame states (example, replace with actual evaluation)
+# def evaluate_reference_frame(tn):
+#     # Replace with actual logic to compute RN(t), NωR/N(t), etc.
+#     return RN, omega_rn
+
+# # Function to calculate control tracking errors (example)
+# def control_tracking_errors():
+#     # Replace with actual logic to compute σB/R and BωB/R
+#     return sigma_br, omega_br
+
+# # Function to determine control solution (example)
+# def control_solution():
+#     # Replace with actual logic to determine control solution u
+#     return u
+
+# # Function to compute the differential (replace with your differential equation model)
+# def f(Xn, t_n, u):
+#     # Replace with actual system dynamics function for f(Xn, tn, u)
+#     return Xn
+
+# # Run the time-stepping loop
+# X_n = X_0  # Initialize the state
+# t_n = t_0
+# sigma_bn = sigma_bn_0
+# omega_bn = omega_bn_0
+# while t_n < tmax:
+#     if new_control_required():
+#         # If new control is required, evaluate reference frame states and control tracking errors
+#         RN_t, NωR_N_t = evaluate_reference_frame(tn)
+#         σB_R, BωB_R = control_tracking_errors()
+#         u = control_solution()
+
+#     # Run the 4th order Runge-Kutta integration
+#     k1 = dt * f(X_n, t_n, u)
+#     k2 = dt * f([X_n + k1/2], t_n + dt/2, u)
+#     k3 = dt * f([X_n + k2/2], t_n + dt/2, u)
+#     k4 = dt * f([X_n + k3], t_n + dt, u)
+#     X_n = [X_n + (1/6)*(k1 + 2*k2 + 2*k3 + k4)] # Update the state
+
+#     # Check for control error and map to shadow set if necessary
+#     checkShadowSet(B_sigma_BN)
+#     # Update time and save states
+#     tn += Δt
+# Save spacecraft states Xn and u (you can save this to a file or list as needed)
+# save_states(Xn, u)
+
+
 
 # Write your own numerical integrator using RK45
 
-# Constants for inertia matrix (for simplicity, assuming a diagonal matrix)
-
 # Define the spacecraft dynamics (equation of motion)
-# def dynamics(X, u):
-#     sigma_BN = X[:3]  # MRP attitude
-#     omega_BN = X[3:]  # Angular velocity
-#     omega_BN_skew = tilde(omega_BN)
+def dynamics(X, dt, u):
+    sigma_BN = X[:3]  # MRP attitude
+    sigma_BN_skew = tilde(sigma_BN)
+    sigma_BN = sigma_BN.reshape((3, 1)) # make col
+    omega_BN = X[3:]  # Angular velocity
+    omega_BN_skew = tilde(omega_BN)
+    omega_BN = omega_BN.reshape((3, 1)) # make col
+    if isinstance(u, np.ndarray):
+        u = u.reshape((3,1))
+    d_omega_BN = I_b_inv @ (-omega_BN_skew @ (I_b @ omega_BN) + u)
+    d_sigma_BN = .25 * ((1 - (sigma_BN.T @ sigma_BN)) * np.eye(3) + 2 * sigma_BN_skew + 2 * sigma_BN @ sigma_BN.T) @ omega_BN
+    return np.concatenate((d_sigma_BN.flatten(), d_omega_BN.flatten()))
+
+# Runge-Kutta 4th order integrator
+def rk4_integrator(f, X, u, dt, tn):
+    k1 = dt*f(X, tn, u)
+    k2 = dt*f(X+(k1/2), tn+(dt/2), u)
+    k3 = dt*f(X+(k2/2), tn+(dt/2), u)
+    k4 = dt*f(X+k3, tn+dt, u)
+    X = X + (1/6)*(k1+2*k2+2*k3+k4)
+    return X
+
+# Time settings
+dt = 1  # 1 second time step
+t_final = 500.0  # Total time for the integration
+time_steps = int(t_final / dt)
+
+# Control torque (zero initially)
+u = np.zeros(3)  # Control torque vector
+
+# Arrays to store results for plotting
+sigma_BN_history = []
+omega_BN_history = []
+T_history = []
+B_H_history = []
+
+# Integration loop (u = 0 for this part)
+X = X_0
+for t in np.arange(0, t_final + dt, dt):
+    B_sigma_BN = X[:3]  # MRP attitude
+    # B_sigma_BN = checkShadowSet(B_sigma_BN)
+    B_omega_BN = X[3:]  # Angular velocity
+    sigma_BN_history.append(B_sigma_BN)
+    omega_BN_history.append(B_omega_BN)
+
+    # Kinetic Energy
+    T = 0.5 * (B_omega_BN.T @ (I_b @ B_omega_BN))
+    T_history.append(T)
     
-#     # Equation of motion
-#     d_omega_BN = -np.dot(omega_BN_skew, I_b @ omega_BN) + u
-#     return np.concatenate((d_sigma_BN(sigma_BN, omega_BN), d_omega_BN))
-
-# # MRP kinematics
-# def d_sigma_BN(sigma_BN, omega_BN):
-#     # MRP update equations (for simplicity assume small angles)
-#     sigma_dot = 0.5 * (np.eye(3) - tilde(sigma_BN)) @ omega_BN
-#     return sigma_dot
-
-# # Runge-Kutta 4th order integrator
-# def rk4_integrator(f, X, u, dt):
-#     k1 = f(X, u)
-#     k2 = f(X + 0.5 * dt * k1, u)
-#     k3 = f(X + 0.5 * dt * k2, u)
-#     k4 = f(X + dt * k3, u)
-#     return X + (dt / 6) * (k1 + 2*k2 + 2*k3 + k4)
-
-# # Initial conditions (assuming initial angular velocity and MRP are zero)
-
-# # Time settings
-# dt = 1e-1  # 1 second time step
-# t_final = 100.0  # Total time for the integration
-# time_steps = int(t_final / dt)
-
-# # Control torque (zero initially)
-# u = np.zeros(3)  # Control torque vector
-
-# # Arrays to store results for plotting
-# sigma_BN_history = []
-# omega_BN_history = []
-# T_history = []
-# H_history = []
-
-# # Integration loop (u = 0 for this part)
-# X = X_0
-# print(X)
-# for t in range(time_steps):
-#     sigma_BN_history.append(X[:3])
-#     omega_BN_history.append(X[3:])
+    # Compute angular momentum H
+    H = I_b @ B_omega_BN
+    B_H_history.append(H)
     
-#     # Compute rotational kinetic energy T
-#     print(X[3:])
-#     T = 0.5 * np.dot(X[3:], I_b @ X[3:])
-#     T_history.append(T)
+    # Update attitude using RK4
+    X = rk4_integrator(dynamics, X, u, dt, t)
+
+    X[:3] = checkShadowSet(X[:3])
+
+
+# Xn, t_500, sigmas, omegas, B_H, N_H, T = RK4(dynamics, X_0, 1, 500, 0)
+# print(sigmas[0:3, 500])
+# Results at 500 seconds
+sigma_BN_500 = sigma_BN_history[-1]
+omega_BN_500 = omega_BN_history[-1]
+T_500 = T_history[-1]
+B_H_500 = B_H_history[-1]
+BN_500 = MRP2DCM(sigma_BN_500)
+N_H_500 = BN_500.T @ B_H_500
+
+print(f"MRP attitude at 500s: {sigma_BN_500}")
+print(f"Kinetic energy at 500s: {T_500}")
+print(f"B-Frame Angular momentum at 500s: {B_H_500}")
+print(f"N-Frame Angular momentum at 500s: {N_H_500}")
+writeToFile("./tasks/task 7/sigma_500s.txt", sigma_BN_500)
+writeToFile("./tasks/task 7/T_500s.txt", T_500)
+writeToFile("./tasks/task 7/H_500s_B_frame.txt", B_H_500)
+writeToFile("./tasks/task 7/H_500s_N_frame.txt", N_H_500)
+
+
+# Now apply control torque u = (0.01, -0.01, 0.02) Nm and integrate again for 100s
+u_fixed = np.array([0.01, -0.01, 0.02])  # Fixed control torque
+X = X_0  # Reset initial conditions
+sigma_BN_100_history = []
+omega_BN_100_history = []
+t_final_control = 100 # update to only 100s this time
+# Run integration with control torque for 100 seconds
+for t in np.arange(0, t_final_control + dt, dt):
+    B_sigma_BN = X[:3]  # MRP attitude
+    B_omega_BN = X[3:]
+    # B_sigma_BN = checkShadowSet(B_sigma_BN)
+
+    sigma_BN_100_history.append(B_sigma_BN)
+    omega_BN_100_history.append(B_omega_BN)
+
+    # Update attitude using RK4
+    X = rk4_integrator(dynamics, X, u_fixed, dt, t)
+
+    X[:3] = checkShadowSet(X[:3])
+
     
-#     # Compute angular momentum H
-#     H = I_b @ X[3:]
-#     H_history.append(H)
-    
-#     # Update attitude using RK4
-#     X = rk4_integrator(dynamics, X, u, dt)
+sigma_BN_100 = sigma_BN_100_history[-1]
+print(f"MRP attitude at 100s with control torque: {sigma_BN_100}")
+writeToFile("./tasks/task 7/sigma_100s_with_control.txt", sigma_BN_100)
 
-# # Results at 500 seconds
-# sigma_BN_500 = sigma_BN_history[-1]
-# omega_BN_500 = omega_BN_history[-1]
-# T_500 = T_history[-1]
-# H_500 = H_history[-1]
+# Plot the results for visualization
+sigma_BN_history = np.array(sigma_BN_history)
+omega_BN_history = np.array(omega_BN_history)
 
-# print(f"MRP attitude at 500s: {sigma_BN_500}")
-# print(f"Angular velocity at 500s: {omega_BN_500}")
-# print(f"Rotational kinetic energy at 500s: {T_500}")
-# print(f"Angular momentum at 500s: {H_500}")
+fig, axs = plt.subplots(2, 1, figsize=(12, 6))  # Create 2 vertically stacked subplots
 
-# # Now apply control torque u = (0.01, -0.01, 0.02) Nm and integrate again for 100s
-# u_fixed = np.array([0.01, -0.01, 0.02])  # Fixed control torque
-# X = X_0  # Reset initial conditions
-# sigma_BN_100_history = []
+# Time vectors for plotting
+t_sigma = np.linspace(0, t_final, len(sigma_BN_history))
+t_omega = np.linspace(0, t_final, len(omega_BN_history))
 
-# # Run integration with control torque for 100 seconds
-# for t in range(int(100 / dt)):
-#     sigma_BN_100_history.append(X[:3])
-    
-#     # Update attitude using RK4
-#     X = rk4_integrator(dynamics, X, u_fixed, dt)
+# Plot MRP attitude history
+axs[0].plot(t_sigma, sigma_BN_history[:, 0], label=r'$\sigma_1$')
+axs[0].plot(t_sigma, sigma_BN_history[:, 1], label=r'$\sigma_2$')
+axs[0].plot(t_sigma, sigma_BN_history[:, 2], label=r'$\sigma_3$')
+axs[0].set_title("MRP Attitude Without Control")
+axs[0].set_xlabel("Time (s)")
+axs[0].set_ylabel("MRP Components")
+axs[0].legend()
 
-# sigma_BN_100 = sigma_BN_100_history[-1]
-# print(f"MRP attitude at 100s with control torque: {sigma_BN_100}")
+# Plot Angular velocity history
+axs[1].plot(t_omega, omega_BN_history[:, 0], label=r'$\omega_1$')
+axs[1].plot(t_omega, omega_BN_history[:, 1], label=r'$\omega_2$')
+axs[1].plot(t_omega, omega_BN_history[:, 2], label=r'$\omega_3$')
+axs[1].set_title("Angular Velocity Without Control")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Angular Velocity (rad/s)")
+axs[1].legend()
 
-# # Plot the results for visualization
-# sigma_BN_history = np.array(sigma_BN_history)
-# omega_BN_history = np.array(omega_BN_history)
+plt.tight_layout()
+plt.savefig("task7_without_control.png")
 
-# plt.subplots(figsize=(12, 6))
+# Plot the results for visualization
+sigma_BN_100_history = np.array(sigma_BN_100_history)
+omega_BN_100_history = np.array(omega_BN_100_history)
 
-# # Plot MRP attitude history
-# plt.subplot(2, 1, 1)
-# plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history[:, 0], label=r'$\sigma_1$')
-# plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history[:,1], label=r'$\sigma_2$')
-# plt.plot(np.linspace(0, t_final, len(sigma_BN_history)), sigma_BN_history[:,2], label=r'$\sigma_3$')
-# plt.title("MRP Attitude over Time")
-# plt.xlabel("Time (s)")
-# plt.ylabel("MRP Components")
-# plt.legend()
+# Time vectors
+t_sigma = np.linspace(0, t_final_control, len(sigma_BN_100_history))
+t_omega = np.linspace(0, t_final_control, len(omega_BN_100_history))
 
-# # Plot Angular velocity history
-# plt.subplot(2, 1, 2)
-# plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history[:,0], label=r'$\omega_1$')
-# plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history[:,1], label=r'$\omega_1$')
-# plt.plot(np.linspace(0, t_final, len(omega_BN_history)), omega_BN_history[:,2], label=r'$\omega_1$')
+# Set up subplots
+fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
-# plt.title("Angular Velocity over Time")
-# plt.xlabel("Time (s)")
-# plt.ylabel("Angular Velocity (rad/s)")
-# plt.legend()
+# Plot MRP attitude history
+axs[0].plot(t_sigma, sigma_BN_100_history[:, 0], label=r'$\sigma_1$')
+axs[0].plot(t_sigma, sigma_BN_100_history[:, 1], label=r'$\sigma_2$')
+axs[0].plot(t_sigma, sigma_BN_100_history[:, 2], label=r'$\sigma_3$')
+axs[0].set_title("MRP Attitude With Control")
+axs[0].set_xlabel("Time (s)")
+axs[0].set_ylabel("MRP Components")
+axs[0].legend()
 
-# plt.tight_layout()
-# plt.show()
+# Plot Angular velocity history
+axs[1].plot(t_omega, omega_BN_100_history[:, 0], label=r'$\omega_1$')
+axs[1].plot(t_omega, omega_BN_100_history[:, 1], label=r'$\omega_2$')
+axs[1].plot(t_omega, omega_BN_100_history[:, 2], label=r'$\omega_3$')
+axs[1].set_title("Angular Velocity With Control")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Angular Velocity (rad/s)")
+axs[1].legend()
+
+# Layout and save
+plt.tight_layout()
+plt.savefig("task7_with_control.png")
+
+
+############################## Task 8: Sun Pointing Control (10 points) ##############################
+print("\n\nBEGIN TASK 8")
+# # B_u = −Kσ_B/R − P * B_ω_B/R
+
+# Compute PD gains based on critical damping and 120s time constant
+I_max = np.max(np.diag(I_b))
+I_min = np.min(np.diag(I_b))
+tau = 120  # seconds
+P = (2 * I_max) / tau
+K = P**2 / I_min
+
+print("Chosen P = " + str(P) + " and K = " + str(K))
+writeToFile(f"./tasks/task 8/gains.txt", np.array([P,K]))
+
+# Define time settings
+dt = 1.0  # 1-second step
+t_final = 450  # seconds
+time_points = np.arange(0, t_final + dt, dt)
+
+# Storage arrays
+sigma_BN_task8_history = []
+omega_BN_task8_history = []
+log_times = [15, 100, 200, 400]
+log_outputs = {}
+
+# PD control function
+def PD_controller(t, sigma_bn, omega_bn, RN, omega_rn, K, P):
+    sigma_br, omega_br = getTrackingErrors(t, sigma_bn, omega_bn, RN, omega_rn)
+    u = -K * sigma_br - P * omega_br
+    return u
+
+# Initialize state
+X = X_0
+
+# Run control simulation
+for t in time_points:
+    sigma_bn = X[:3]
+    omega_bn = X[3:]
+    RN = getRsN()
+    omega_rn = getOmegaRsN()
+    u = PD_controller(t, sigma_bn, omega_bn, RN, omega_rn, K, P)
+
+    sigma_BN_task8_history.append(sigma_bn)
+    omega_BN_task8_history.append(omega_bn)
+
+    # Log MRPs at requested times (short rotation set)
+    if int(t) in log_times:
+        log_outputs[int(t)] = sigma_bn
+        print(f"σB/N at t = {int(t)}s {sigma_bn}")
+        writeToFile(f"./tasks/task 8/sigma_{int(t)}s.txt", sigma_bn)
+
+    # Integrate using RK4
+    X = rk4_integrator(dynamics, X, u, dt, t)
+
+    # Enforce MRP shadow set condition after update
+    X[:3] = checkShadowSet(X[:3])
+
+# Optional: convert to np.array if plotting
+sigma_BN_task8_history = np.array(sigma_BN_task8_history)
+omega_BN_task8_history = np.array(omega_BN_task8_history)
+
+# Save final plots
+fig, axs = plt.subplots(2, 1, figsize=(12, 6))
+axs[0].plot(time_points, sigma_BN_task8_history[:, 0], label=r'$\sigma_1$')
+axs[0].plot(time_points, sigma_BN_task8_history[:, 1], label=r'$\sigma_2$')
+axs[0].plot(time_points, sigma_BN_task8_history[:, 2], label=r'$\sigma_3$')
+axs[0].set_title("Sun-Pointing MRP Attitude (Task 8)")
+axs[0].set_ylabel("MRP Components")
+axs[0].legend()
+
+axs[1].plot(time_points, omega_BN_task8_history[:, 0], label=r'$\omega_1$')
+axs[1].plot(time_points, omega_BN_task8_history[:, 1], label=r'$\omega_2$')
+axs[1].plot(time_points, omega_BN_task8_history[:, 2], label=r'$\omega_3$')
+axs[1].set_title("Sun-Pointing Angular Velocity (Task 8)")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Angular Velocity (rad/s)")
+axs[1].legend()
+
+plt.tight_layout()
+plt.savefig("task8_sun_pointing_control.png")
+
+
+
+############################## Task 9: Nadir Pointing Control (10 points) ##############################
+print("\n\nBEGIN TASK 9")
+
+# Initialize state
+X = X_0
+sigma_BN_task9_history = []
+omega_BN_task9_history = []
+
+# Run control simulation
+for t in time_points:
+    sigma_bn = X[:3]
+    omega_bn = X[3:]
+    RN = getRnN(t)
+    omega_rn = getOmegaRnN(t)
+    u = PD_controller(t, sigma_bn, omega_bn, RN, omega_rn, K, P)
+
+    sigma_BN_task9_history.append(sigma_bn)
+    omega_BN_task9_history.append(omega_bn)
+
+    # Log MRPs at requested times (short rotation set)
+    if int(t) in log_times:
+        log_outputs[int(t)] = sigma_bn
+        print(f"σB/N at t = {int(t)}s {sigma_bn}")
+        writeToFile(f"./tasks/task 9/sigma_{int(t)}s.txt", sigma_bn)
+
+    # Integrate using RK4
+    X = rk4_integrator(dynamics, X, u, dt, t)
+
+    # Enforce MRP shadow set condition after update
+    X[:3] = checkShadowSet(X[:3])
+
+# Optional: convert to np.array if plotting
+sigma_BN_task9_history = np.array(sigma_BN_task9_history)
+omega_BN_task9_history = np.array(omega_BN_task9_history)
+
+# Save final plots
+fig, axs = plt.subplots(2, 1, figsize=(12, 6))
+axs[0].plot(time_points, sigma_BN_task9_history[:, 0], label=r'$\sigma_1$')
+axs[0].plot(time_points, sigma_BN_task9_history[:, 1], label=r'$\sigma_2$')
+axs[0].plot(time_points, sigma_BN_task9_history[:, 2], label=r'$\sigma_3$')
+axs[0].set_title("Nadir-Pointing MRP Attitude (Task 9)")
+axs[0].set_ylabel("MRP Components")
+axs[0].legend()
+
+axs[1].plot(time_points, omega_BN_task9_history[:, 0], label=r'$\omega_1$')
+axs[1].plot(time_points, omega_BN_task9_history[:, 1], label=r'$\omega_2$')
+axs[1].plot(time_points, omega_BN_task9_history[:, 2], label=r'$\omega_3$')
+axs[1].set_title("Nadir-Pointing Angular Velocity (Task 9)")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Angular Velocity (rad/s)")
+axs[1].legend()
+
+plt.tight_layout()
+plt.savefig("task9_nadir_pointing_control.png")
+
+
+
+############################## Task 10: GMO Pointing Control (10 points) ##############################
+print("\n\nBEGIN TASK 10")
+
+# Initialize state
+X = X_0
+sigma_BN_task10_history = []
+omega_BN_task10_history = []
+
+# Run control simulation
+for t in time_points:
+    sigma_bn = X[:3]
+    omega_bn = X[3:]
+    RN = getRcN(t)
+    omega_rn = getOmegaRcN(t)
+    u = PD_controller(t, sigma_bn, omega_bn, RN, omega_rn, K, P)
+
+    sigma_BN_task10_history.append(sigma_bn)
+    omega_BN_task10_history.append(omega_bn)
+
+    # Log MRPs at requested times (short rotation set)
+    if int(t) in log_times:
+        log_outputs[int(t)] = sigma_bn
+        print(f"σB/N at t = {int(t)}s {sigma_bn}")
+        writeToFile(f"./tasks/task 10/sigma_{int(t)}s.txt", sigma_bn)
+
+    # Integrate using RK4
+    X = rk4_integrator(dynamics, X, u, dt, t)
+
+    # Enforce MRP shadow set condition after update
+    X[:3] = checkShadowSet(X[:3])
+
+# Optional: convert to np.array if plotting
+sigma_BN_task10_history = np.array(sigma_BN_task10_history)
+omega_BN_task10_history = np.array(omega_BN_task10_history)
+
+# Save final plots
+fig, axs = plt.subplots(2, 1, figsize=(12, 6))
+axs[0].plot(time_points, sigma_BN_task10_history[:, 0], label=r'$\sigma_1$')
+axs[0].plot(time_points, sigma_BN_task10_history[:, 1], label=r'$\sigma_2$')
+axs[0].plot(time_points, sigma_BN_task10_history[:, 2], label=r'$\sigma_3$')
+axs[0].set_title("GMO-Pointing MRP Attitude (Task 10)")
+axs[0].set_ylabel("MRP Components")
+axs[0].legend()
+
+axs[1].plot(time_points, omega_BN_task10_history[:, 0], label=r'$\omega_1$')
+axs[1].plot(time_points, omega_BN_task10_history[:, 1], label=r'$\omega_2$')
+axs[1].plot(time_points, omega_BN_task10_history[:, 2], label=r'$\omega_3$')
+axs[1].set_title("GMO-Pointing Angular Velocity (Task 10)")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Angular Velocity (rad/s)")
+axs[1].legend()
+
+plt.tight_layout()
+plt.savefig("task10_gmo_pointing_control.png")
+
+
+
+
+############################## Task 11: Mission Scenario Simulation (10 points) ##############################
+print("\n\nBEGIN TASK 11")
+
+# Define mission duration
+t_final = 6500  # seconds
+time_points_11 = np.arange(0, t_final + dt, dt)
+
+# Define time points to log MRPs
+log_times_11 = [300, 2100, 3400, 4400, 5600]
+sigma_BN_task11_history = []
+omega_BN_task11_history = []
+log_outputs_11 = {}
+
+# Reset initial state
+X = np.copy(X_0)
+
+# Mission logic: determine mode based on positions
+def determine_control_mode(t, r_LMO_inertial, r_GMO_inertial, sun_vector=np.array([-1, 0, 0])):
+    in_sunlight = r_LMO_inertial[1] > 0
+    r_LMO_unit = r_LMO_inertial / np.linalg.norm(r_LMO_inertial)
+    r_GMO_unit = r_GMO_inertial / np.linalg.norm(r_GMO_inertial)
+    angle = np.arccos(np.dot(r_LMO_unit, r_GMO_unit))
+    in_comm_window = angle < np.deg2rad(comm_angle_threshold)
+
+    if in_sunlight:
+        return 'sun'
+    elif in_comm_window:
+        return 'gmo'
+    else:
+        return 'nadir'
+
+# Run mission simulation
+for t in time_points_11:
+    sigma_bn = X[:3]
+    omega_bn = X[3:]
+
+    # Compute inertial positions of LMO and GMO
+    r_LMO_inertial, _ = orbit_sim(r_lmo, omega_lmo_0, i_lmo_0, theta_lmo(t))
+    r_GMO_inertial, _ = orbit_sim(r_gmo, omega_gmo_0, i_gmo_0, theta_gmo(t))
+
+    # Determine control mode
+    mode = determine_control_mode(t, r_LMO_inertial, r_GMO_inertial)
+
+    # Get reference attitude and rate based on mode
+    if mode == 'sun':
+        RN = getRsN()
+        omega_rn = getOmegaRsN()
+    elif mode == 'nadir':
+        RN = getRnN(t)
+        omega_rn = getOmegaRnN(t)
+    elif mode == 'gmo':
+        RN = getRcN(t)
+        omega_rn = getOmegaRcN(t)
+
+    # Control torque
+    u = PD_controller(t, sigma_bn, omega_bn, RN, omega_rn, K, P)
+
+    # Log state
+    sigma_BN_task11_history.append(sigma_bn)
+    omega_BN_task11_history.append(omega_bn)
+
+    if int(t) in log_times_11:
+        log_outputs_11[int(t)] = sigma_bn
+        print(f"σB/N at t = {int(t)}s {sigma_bn}")
+        writeToFile(f"./tasks/task 11/sigma_{int(t)}s.txt", sigma_bn)
+
+    # Integrate dynamics and apply MRP shadow set
+    X = rk4_integrator(dynamics, X, u, dt, t)
+    X[:3] = checkShadowSet(X[:3])
+
+# Optional: convert for plotting
+sigma_BN_task11_history = np.array(sigma_BN_task11_history)
+omega_BN_task11_history = np.array(omega_BN_task11_history)
+
+# Save final plots
+fig, axs = plt.subplots(2, 1, figsize=(12, 6))
+axs[0].plot(time_points_11, sigma_BN_task11_history[:, 0], label=r'$\sigma_1$')
+axs[0].plot(time_points_11, sigma_BN_task11_history[:, 1], label=r'$\sigma_2$')
+axs[0].plot(time_points_11, sigma_BN_task11_history[:, 2], label=r'$\sigma_3$')
+axs[0].set_title("Mission Scenario MRP Attitude (Task 11)")
+axs[0].set_ylabel("MRP Components")
+axs[0].legend()
+
+axs[1].plot(time_points_11, omega_BN_task11_history[:, 0], label=r'$\omega_1$')
+axs[1].plot(time_points_11, omega_BN_task11_history[:, 1], label=r'$\omega_2$')
+axs[1].plot(time_points_11, omega_BN_task11_history[:, 2], label=r'$\omega_3$')
+axs[1].set_title("Mission Scenario Angular Velocity (Task 11)")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Angular Velocity (rad/s)")
+axs[1].legend()
+
+plt.tight_layout()
+plt.savefig("task11_mission_scenario.png")
+
+
+
