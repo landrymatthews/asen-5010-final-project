@@ -1,0 +1,195 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{lscape}
+\usepackage{booktabs}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{ASEN 5010}
+\lhead{Spacecraft Dynamics Capstone Project}
+\rfoot{\thepage}
+
+\begin{document}
+
+% Title Page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge \textbf{ASEN 5010 Semester Project}}\\[1.5cm]
+    {\Large \textbf{Attitude Dynamics and Control of a}}\\[0.5cm]
+    {\Large \textbf{Nano-Satellite Orbiting Mars}}\\[2cm]
+    {\normalsize Prof. Dr. Vishala Arya}\\
+    {\normalsize Aerospace Engineering Sciences}\\
+    {\normalsize University of Colorado, Boulder}\\[2cm]
+    {\large Mid-Project (Tasks 1--6) Report Due Date: April 10th 2024}\\
+    {\large Final Project Report Due Date: April 24th 2024}
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Project Overview}
+This project considers a small satellite orbiting Mars at a low altitude gathering science data. However,
+this small satellite needs to transfer this data to a larger mother satellite at a higher altitude. Further, to
+keep the batteries from draining all the way, periodically the satellite must point its solar panels at the
+sun to recharge. Thus, three mission goals must be considered by the satellite: 1) point sensor platform
+straight down at Mars, 2) point communication platform at the mother satellite, and 3) point the solar
+arrays at the sun. In all scenarios the small spacecraft and mother craft are on simple circular orbits
+whose motion is completely known.
+
+\section{Mission Description}
+A nano-satellite is on a circular low Mars orbit (LMO) to observe the non-sunlit Mars surface. A second satellite, the mother spacecraft, is on a circular geosynchronous Mars orbit (GMO). The nano-satellite must either:
+\begin{itemize}
+  \item point a sensor at the surface when in science mode,
+  \item point the solar panels in the sun direction when in power mode, or
+  \item point the communication dish at the mothercraft when in communication mode.
+\end{itemize}
+
+\section{Mission Scenario Definitions}
+\subsection{Spacecraft Attitude States}
+\begin{align}
+\sigma_{B/N}(t_0) &= \begin{bmatrix} 0.3 \\ -0.4 \\ 0.5 \end{bmatrix} \\
+{}^B\omega_{B/N}(t_0) &= \begin{bmatrix} 1.00 \\ 1.75 \\ -2.20 \end{bmatrix}~\text{deg/s} \\
+{}^B[I] &= \begin{bmatrix} 10 & 0 & 0 \\ 0 & 5 & 0 \\ 0 & 0 & 7.5 \end{bmatrix}~\text{kg m}^2
+\end{align}
+
+\subsection{Mission Pointing Scenarios}
+During the mission, the control law must detumble the satellite and point:
+\begin{itemize}
+  \item antenna (\(-\hat{b}_1\)) towards GMO,
+  \item sensor (\(\hat{b}_1\)) at Mars (nadir or \(-\hat{r}\)),
+  \item solar panels (\(\hat{b}_3\)) at the sun (\(\hat{n}_2\)).
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\caption{Spacecraft Pointing Scenario Summary}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Orbital Situation & Primary Pointing Scenario Goals \\
+\midrule
+SC on sunlit Mars side & Point Solar Panels axis $\hat{b}_3$ at Sun \\
+SC not on sunlit Mars side \& GMO Visible & Point Antenna axis $-\hat{b}_1$ at GMO \\
+SC not on sunlit Mars side \& GMO not Visible & Point sensor axis $\hat{b}_1$ along Mars nadir direction \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mission Orbit Overview}
+\begin{table}[h!]
+\centering
+\caption{Initial Orbit Frame Orientation Angles}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+Spacecraft & $\Omega$ & $i$ & $\theta(t_0)$ \\
+\midrule
+LMO & $20^\circ$ & $30^\circ$ & $60^\circ$ \\
+GMO & $0^\circ$ & $0^\circ$ & $250^\circ$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Attitude Control Law Overview}
+The PD control law is:
+\begin{equation}
+{}^B\!u = -K\sigma_{B/R} - P\,{}^B\omega_{B/R}
+\end{equation}
+where $K$ and $P$ are scalar gains.
+
+\subsection{Astrodynamics Numerical Integration}
+Use a 4th order Runge-Kutta (RK4) routine. Hold the control piecewise constant during the RK4 integration from $t_n$ to $t_{n+1}$. The pseudo-code is as follows:
+
+\begin{verbatim}
+X0 = [ σ_{B/N}(t0) Bω_{B/N}(t0) ];
+tmax = ...; ∆t = ...; tn = 0.0;
+while tn < tmax do
+  if new control required then
+    Evaluate [R_N(t)], Nω_{R/N}(t);
+    Compute σ_{B/R}, Bω_{B/R};
+    Determine control u;
+  end
+  k1 = ∆t*f(Xn, tn, u);
+  k2 = ∆t*f(Xn + k1/2, tn + ∆t/2, u);
+  k3 = ∆t*f(Xn + k2/2, tn + ∆t/2, u);
+  k4 = ∆t*f(Xn + k3, tn + ∆t, u);
+  Xn+1 = Xn + 1/6 * (k1 + 2k2 + 2k3 + k4);
+  if |σ_{B/N}| > 1 then
+    map σ_{B/N} to shadow set;
+  end
+  tn+1 = tn + ∆t;
+  save X and u;
+end
+\end{verbatim}
+
+\noindent Continue with task descriptions and equations as needed...
+\subsection{Task 1: Orbit Simulation (5 points)}
+Assume the general orbit frame \(\mathcal{N}\) is Mars-centered inertial. Propagate the orbit of the LMO nano-satellite using the provided orbit elements. Propagate for at least one full orbit. Plot a 3D view of the orbit trajectory. Then propagate the orbit of the GMO spacecraft and overlay this trajectory with the LMO orbit. Annotate a few position vectors of interest.
+
+\subsection{Task 2: Orbit Frame Orientation (5 points)}
+Using the orbit propagation of Task 1, compute the orbit frame \(\mathcal{H} = \{\hat{r}, \hat{\theta}, \hat{h}\}\). You can compute this from the numerical position and velocity vectors at each time step. Use the following DCM definition:
+\[
+[NH] = \begin{bmatrix} \hat{r} & \hat{\theta} & \hat{h} \end{bmatrix}
+\]
+Plot the unit vector components of \(\hat{r}, \hat{\theta}, \hat{h}\) as a function of time.
+
+\subsection{Task 3: Sun-Pointing Reference Frame Orientation (10 points)}
+Compute the DCM \([NR]\) that points the \(\hat{b}_3\) body axis toward the Sun. This DCM is computed using a sun vector that is known in inertial frame. The DCM \([NR]\) can be constructed using:
+\begin{itemize}
+  \item \(\hat{r}_3 = \) Sun vector normalized
+  \item \(\hat{r}_2 = \hat{r}_3 \times \hat{h}\) (\(\hat{h}\) from orbit frame)
+  \item \(\hat{r}_1 = \hat{r}_2 \times \hat{r}_3\)
+\end{itemize}
+Normalize the vectors and construct the full DCM. Then compute the MRP attitude error \(\sigma_{B/R}\) using a provided \(\sigma_{B/N}\) and \([NR]\).
+
+\subsection{Task 4: Nadir-Pointing Reference Frame Orientation (10 points)}
+Construct \([NR]\) for a frame that points the \(\hat{b}_1\) body axis toward the nadir direction \( -\hat{r} \). Use \(\hat{r}\) from Task 2. Construct a full orthonormal frame \(\{\hat{r}_1, \hat{r}_2, \hat{r}_3\}\) with \(\hat{r}_1 = -\hat{r}\) and the other axes constructed to lie in the orbital plane. Normalize all vectors and construct the DCM \([NR]\). Compute and plot \(\sigma_{B/R}(t)\) for one orbit.
+
+\subsection{Task 5: GMO-Pointing Reference Frame Orientation (10 points)}
+Compute the position vector from the LMO satellite to the GMO satellite at each time step. Define \(\hat{r}_1\) to point along this direction. Construct \(\hat{r}_2\) and \(\hat{r}_3\) using cross-products with known orbital elements. Normalize the resulting vectors to form a proper DCM \([NR]\). Plot the MRP attitude error \(\sigma_{B/R}(t)\) for the full orbit.
+
+\subsection{Task 6: Attitude Error Evaluation (10 points)}
+Use \(\sigma_{B/N}\) and \(\omega_{B/N}\) from the Project Overview. Assume \([NR]\) and \(\omega_{R/N}\) are known for one of the earlier defined scenarios (Sun, Nadir, GMO). Compute \(\sigma_{B/R}\) and \(\omega_{B/R} = \omega_{B/N} - [BN]\omega_{R/N}\). Then compute the control torque using the PD law:
+\[
+{}^B\!u = -K\sigma_{B/R} - P\,{}^B\omega_{B/R}
+\]
+Use \(K = 5\) and \(P = 30\). Show your work and all intermediate results.
+
+\subsection{Task 7: Numerical Attitude Simulator (10 points)}
+Write a simulator to propagate the spacecraft's rotational state using RK4. The state includes \(\sigma_{B/N}\) and \(\omega_{B/N}\). The dynamics are:
+\begin{align}
+\dot{\sigma}_{B/N} &= \frac{1}{4} \left( (1 - \sigma^T\sigma)I + 2[\sigma]_\times + 2\sigma\sigma^T \right) \omega_{B/N} \\
+I\dot{\omega}_{B/N} &= -\omega_{B/N} \times I\omega_{B/N} + u
+\end{align}
+Simulate the motion over one orbit, using a constant control torque (e.g., from Task 6) or zero torque for debugging. Plot \(\sigma_{B/N}(t)\) and \(\omega_{B/N}(t)\).
+
+\subsection{Task 8: Sun Pointing Control (10 points)}
+Use the numerical simulator to compute control torque \(u(t)\) based on a time-varying \([NR](t)\) from Task 3. Simulate the PD controller applied during sun-pointing. Plot the control torque, MRPs, and body rate over time. Make sure to verify that the controller achieves sun-pointing and suppresses oscillations.
+
+\subsection{Task 9: Nadir Pointing Control (10 points)}
+Modify the controller to track the nadir-pointing frame from Task 4. Apply this during a different portion of the orbit and analyze transition behavior. Verify the controller tracks the nadir frame without significant overshoot or divergence. Plot \(\sigma_{B/R}(t)\), \(u(t)\), and \(\omega_{B/N}(t)\).
+
+\subsection{Task 10: GMO Pointing Control (10 points)}
+Implement the controller for the GMO-pointing scenario from Task 5. Run a segment of simulation with this reference and demonstrate proper convergence. Ensure the spacecraft points the \(-\hat{b}_1\) axis at the GMO. Plot relevant data to support your results.
+
+\subsection{Task 11: Mission Scenario Simulation (10 points)}
+Combine all control laws and reference frames into one simulation. Implement logic to switch between control modes based on time and orbital position. Simulate a full 6500-second scenario. Plot:
+\begin{itemize}
+  \item \(\sigma_{B/N}(t)\)
+  \item \(\omega_{B/N}(t)\)
+  \item Control torque \(u(t)\)
+\end{itemize}
+Annotate the plot to show when mode transitions occur (Sun, Nadir, GMO). Ensure the controller transitions correctly and all objectives are achieved.
+
+\end{document}
+
+\end{document}
