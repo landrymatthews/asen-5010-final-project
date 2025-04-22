@@ -334,9 +334,11 @@ def getRcNExpr():
     N_r1_col = -N_dr_col.normalized()
     N_r2_col = (N_dr_col.cross(sp.Matrix([0, 0, 1]))).normalized()
     N_r3_col = N_r1_col.cross(N_r2_col).normalized()
+    RcNExpr = (sp.Matrix.hstack(N_r1_col, N_r2_col, N_r3_col)).T
 
-    return (sp.Matrix.hstack(N_r1_col, N_r2_col, N_r3_col)).T
-
+    with open('./latex/RcN.tex', "w+") as file:
+        file.write((sp.latex(RcNExpr)))
+    return RcNExpr
 
 def getRcN(t):
     RcN = getRcNExpr()
@@ -458,53 +460,6 @@ writeToFile("./tasks/task 6/gmo-omega.txt", omega)
 
 ############################## Task 7: Numerical Attitude Simulator (10 points) ##############################
 print("\n\nBEGIN TASK 7")
-# # Function to evaluate current reference frame states (example, replace with actual evaluation)
-# def evaluate_reference_frame(tn):
-#     # Replace with actual logic to compute RN(t), NωR/N(t), etc.
-#     return RN, omega_rn
-
-# # Function to calculate control tracking errors (example)
-# def control_tracking_errors():
-#     # Replace with actual logic to compute σB/R and BωB/R
-#     return sigma_br, omega_br
-
-# # Function to determine control solution (example)
-# def control_solution():
-#     # Replace with actual logic to determine control solution u
-#     return u
-
-# # Function to compute the differential (replace with your differential equation model)
-# def f(Xn, t_n, u):
-#     # Replace with actual system dynamics function for f(Xn, tn, u)
-#     return Xn
-
-# # Run the time-stepping loop
-# X_n = X_0  # Initialize the state
-# t_n = t_0
-# sigma_bn = sigma_bn_0
-# omega_bn = omega_bn_0
-# while t_n < tmax:
-#     if new_control_required():
-#         # If new control is required, evaluate reference frame states and control tracking errors
-#         RN_t, NωR_N_t = evaluate_reference_frame(tn)
-#         σB_R, BωB_R = control_tracking_errors()
-#         u = control_solution()
-
-#     # Run the 4th order Runge-Kutta integration
-#     k1 = dt * f(X_n, t_n, u)
-#     k2 = dt * f([X_n + k1/2], t_n + dt/2, u)
-#     k3 = dt * f([X_n + k2/2], t_n + dt/2, u)
-#     k4 = dt * f([X_n + k3], t_n + dt, u)
-#     X_n = [X_n + (1/6)*(k1 + 2*k2 + 2*k3 + k4)] # Update the state
-
-#     # Check for control error and map to shadow set if necessary
-#     checkShadowSet(B_sigma_BN)
-#     # Update time and save states
-#     tn += Δt
-# Save spacecraft states Xn and u (you can save this to a file or list as needed)
-# save_states(Xn, u)
-
-
 
 # Write your own numerical integrator using RK45
 
