@@ -688,7 +688,7 @@ writeToFile(f"./tasks/task 8/gains.txt", np.array([P,K]))
 
 # Define time settings
 dt = 1.0  # 1-second step
-t_final = 450  # seconds
+t_final = 500  # seconds
 time_points = np.arange(0, t_final + dt, dt)
 
 # Storage arrays
