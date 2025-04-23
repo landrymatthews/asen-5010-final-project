@@ -639,6 +639,37 @@ plt.tight_layout()
 plt.savefig("task7_with_control.png")
 
 
+
+# Convert history arrays for plotting
+B_H_history = np.array(B_H_history)
+N_H_history = np.array(N_H_history)
+T_history = np.array(T_history)
+t_H = np.linspace(0, t_final, len(B_H_history))  # Same time vector for all
+
+# Plot angular momentum in B and N frames
+plt.figure(figsize=(12, 6))
+for i in range(3):
+    plt.plot(t_H, B_H_history[:, i], label=fr'$H_{{B,{i+1}}}$ (Body Frame)', linestyle='--')
+    plt.plot(t_H, N_H_history[:, i], label=fr'$H_{{N,{i+1}}}$ (Inertial Frame)')
+plt.title("Angular Momentum in Body and Inertial Frames")
+plt.xlabel("Time (s)")
+plt.ylabel("Angular Momentum (N·m·s)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("task7_angular_momentum.png")
+
+# Plot kinetic energy
+plt.figure(figsize=(10, 4))
+plt.plot(t_H, T_history, label="Kinetic Energy $T$", color='purple')
+plt.title("Rotational Kinetic Energy Over Time")
+plt.xlabel("Time (s)")
+plt.ylabel("Kinetic Energy (Joules)")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("task7_kinetic_energy.png")
+
+
 ############################## Task 8: Sun Pointing Control (10 points) ##############################
 print("\n\nBEGIN TASK 8")
 # # B_u = −Kσ_B/R − P * B_ω_B/R
