@@ -743,29 +743,29 @@ omega_RN_task8_history = np.array(omega_RN_task8_history)
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
-# Plot MRP history (B/N and R/N)
-axs[0].plot(time_points, sigma_BN_task8_history[:, 0], label=r'$\sigma_{B/N,1}$')
-axs[0].plot(time_points, sigma_BN_task8_history[:, 1], label=r'$\sigma_{B/N,2}$')
-axs[0].plot(time_points, sigma_BN_task8_history[:, 2], label=r'$\sigma_{B/N,3}$')
+# Plot MRP history (B/N)
+line1, = axs[0].plot(time_points, sigma_BN_task8_history[:, 0], label=r'$\sigma_{B/N,1}$')
+line2, = axs[0].plot(time_points, sigma_BN_task8_history[:, 1], label=r'$\sigma_{B/N,2}$')
+line3, = axs[0].plot(time_points, sigma_BN_task8_history[:, 2], label=r'$\sigma_{B/N,3}$')
 
-# Add RN (reference attitude) with dotted lines
-axs[0].plot(time_points, sigma_RN_task8_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points, sigma_RN_task8_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points, sigma_RN_task8_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+# Plot MRP history (R/N) with matching colors and dashed lines
+axs[0].plot(time_points, sigma_RN_task8_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points, sigma_RN_task8_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points, sigma_RN_task8_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
 
 axs[0].set_title("Sun-Pointing MRP Attitude (Task 8)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-# Plot Angular Velocity (B/N and R/N)
-axs[1].plot(time_points, omega_BN_task8_history[:, 0], label=r'$\omega_{B/N,1}$')
-axs[1].plot(time_points, omega_BN_task8_history[:, 1], label=r'$\omega_{B/N,2}$')
-axs[1].plot(time_points, omega_BN_task8_history[:, 2], label=r'$\omega_{B/N,3}$')
+# Plot Angular Velocity history (B/N)
+line1w, = axs[1].plot(time_points, omega_BN_task8_history[:, 0], label=r'$\omega_{B/N,1}$')
+line2w, = axs[1].plot(time_points, omega_BN_task8_history[:, 1], label=r'$\omega_{B/N,2}$')
+line3w, = axs[1].plot(time_points, omega_BN_task8_history[:, 2], label=r'$\omega_{B/N,3}$')
 
-# Add RN (reference angular velocity) with dotted lines
-axs[1].plot(time_points, omega_RN_task8_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points, omega_RN_task8_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points, omega_RN_task8_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+# Plot Angular Velocity history (R/N) with matching colors and dashed lines
+axs[1].plot(time_points, omega_RN_task8_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points, omega_RN_task8_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points, omega_RN_task8_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
 
 axs[1].set_title("Sun-Pointing Angular Velocity (Task 8)")
 axs[1].set_xlabel("Time (s)")
@@ -774,6 +774,7 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task8_sun_pointing_control.png")
+
 
 
 
@@ -821,29 +822,29 @@ omega_RN_task9_history = np.array(omega_RN_task9_history)
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
-# Plot MRP history (B/N and R/N)
-axs[0].plot(time_points, sigma_BN_task9_history[:, 0], label=r'$\sigma_{B/N,1}$')
-axs[0].plot(time_points, sigma_BN_task9_history[:, 1], label=r'$\sigma_{B/N,2}$')
-axs[0].plot(time_points, sigma_BN_task9_history[:, 2], label=r'$\sigma_{B/N,3}$')
+# Plot MRP history (B/N)
+line1, = axs[0].plot(time_points, sigma_BN_task9_history[:, 0], label=r'$\sigma_{B/N,1}$')
+line2, = axs[0].plot(time_points, sigma_BN_task9_history[:, 1], label=r'$\sigma_{B/N,2}$')
+line3, = axs[0].plot(time_points, sigma_BN_task9_history[:, 2], label=r'$\sigma_{B/N,3}$')
 
-# Add RN (reference attitude) with dotted lines
-axs[0].plot(time_points, sigma_RN_task9_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points, sigma_RN_task9_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points, sigma_RN_task9_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+# Plot MRP history (R/N) with matching colors and dashed lines
+axs[0].plot(time_points, sigma_RN_task9_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points, sigma_RN_task9_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points, sigma_RN_task9_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
 
 axs[0].set_title("Nadir-Pointing MRP Attitude (Task 9)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-# Plot Angular Velocity (B/N and R/N)
-axs[1].plot(time_points, omega_BN_task9_history[:, 0], label=r'$\omega_{B/N,1}$')
-axs[1].plot(time_points, omega_BN_task9_history[:, 1], label=r'$\omega_{B/N,2}$')
-axs[1].plot(time_points, omega_BN_task9_history[:, 2], label=r'$\omega_{B/N,3}$')
+# Plot Angular Velocity history (B/N)
+line1w, = axs[1].plot(time_points, omega_BN_task9_history[:, 0], label=r'$\omega_{B/N,1}$')
+line2w, = axs[1].plot(time_points, omega_BN_task9_history[:, 1], label=r'$\omega_{B/N,2}$')
+line3w, = axs[1].plot(time_points, omega_BN_task9_history[:, 2], label=r'$\omega_{B/N,3}$')
 
-# Add RN (reference angular velocity) with dotted lines
-axs[1].plot(time_points, omega_RN_task9_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points, omega_RN_task9_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points, omega_RN_task9_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+# Plot Angular Velocity history (R/N) with matching colors and dashed lines
+axs[1].plot(time_points, omega_RN_task9_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points, omega_RN_task9_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points, omega_RN_task9_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
 
 axs[1].set_title("Nadir-Pointing Angular Velocity (Task 9)")
 axs[1].set_xlabel("Time (s)")
@@ -852,6 +853,7 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task9_nadir_pointing_control.png")
+
 
 
 
@@ -900,29 +902,29 @@ omega_RN_task10_history = np.array(omega_RN_task10_history)
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
-# Plot MRP history (B/N and R/N)
-axs[0].plot(time_points, sigma_BN_task10_history[:, 0], label=r'$\sigma_{B/N,1}$')
-axs[0].plot(time_points, sigma_BN_task10_history[:, 1], label=r'$\sigma_{B/N,2}$')
-axs[0].plot(time_points, sigma_BN_task10_history[:, 2], label=r'$\sigma_{B/N,3}$')
+# Plot MRP history (B/N)
+line1, = axs[0].plot(time_points, sigma_BN_task10_history[:, 0], label=r'$\sigma_{B/N,1}$')
+line2, = axs[0].plot(time_points, sigma_BN_task10_history[:, 1], label=r'$\sigma_{B/N,2}$')
+line3, = axs[0].plot(time_points, sigma_BN_task10_history[:, 2], label=r'$\sigma_{B/N,3}$')
 
-# Add RN (reference attitude) with dotted lines
-axs[0].plot(time_points, sigma_RN_task10_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points, sigma_RN_task10_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points, sigma_RN_task10_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+# Plot MRP history (R/N) with matching colors and dashed lines
+axs[0].plot(time_points, sigma_RN_task10_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points, sigma_RN_task10_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points, sigma_RN_task10_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
 
 axs[0].set_title("GMO-Pointing MRP Attitude (Task 10)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-# Plot Angular Velocity (B/N and R/N)
-axs[1].plot(time_points, omega_BN_task10_history[:, 0], label=r'$\omega_{B/N,1}$')
-axs[1].plot(time_points, omega_BN_task10_history[:, 1], label=r'$\omega_{B/N,2}$')
-axs[1].plot(time_points, omega_BN_task10_history[:, 2], label=r'$\omega_{B/N,3}$')
+# Plot Angular Velocity history (B/N)
+line1w, = axs[1].plot(time_points, omega_BN_task10_history[:, 0], label=r'$\omega_{B/N,1}$')
+line2w, = axs[1].plot(time_points, omega_BN_task10_history[:, 1], label=r'$\omega_{B/N,2}$')
+line3w, = axs[1].plot(time_points, omega_BN_task10_history[:, 2], label=r'$\omega_{B/N,3}$')
 
-# Add RN (reference angular velocity) with dotted lines
-axs[1].plot(time_points, omega_RN_task10_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points, omega_RN_task10_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points, omega_RN_task10_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+# Plot Angular Velocity history (R/N) with matching colors and dashed lines
+axs[1].plot(time_points, omega_RN_task10_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points, omega_RN_task10_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points, omega_RN_task10_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
 
 axs[1].set_title("GMO-Pointing Angular Velocity (Task 10)")
 axs[1].set_xlabel("Time (s)")
@@ -931,6 +933,7 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task10_gmo_pointing_control.png")
+
 
 
 
@@ -1020,29 +1023,29 @@ omega_RN_task11_history = np.array(omega_RN_task11_history)
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
-# Plot MRP history (B/N and R/N)
-axs[0].plot(time_points_11, sigma_BN_task11_history[:, 0], label=r'$\sigma_{B/N,1}$')
-axs[0].plot(time_points_11, sigma_BN_task11_history[:, 1], label=r'$\sigma_{B/N,2}$')
-axs[0].plot(time_points_11, sigma_BN_task11_history[:, 2], label=r'$\sigma_{B/N,3}$')
+# Plot MRP history (B/N)
+line1, = axs[0].plot(time_points_11, sigma_BN_task11_history[:, 0], label=r'$\sigma_{B/N,1}$')
+line2, = axs[0].plot(time_points_11, sigma_BN_task11_history[:, 1], label=r'$\sigma_{B/N,2}$')
+line3, = axs[0].plot(time_points_11, sigma_BN_task11_history[:, 2], label=r'$\sigma_{B/N,3}$')
 
-# Add RN (reference attitude) with dotted lines
-axs[0].plot(time_points_11, sigma_RN_task11_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points_11, sigma_RN_task11_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points_11, sigma_RN_task11_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+# Plot MRP history (R/N) with matching colors and dashed lines
+axs[0].plot(time_points_11, sigma_RN_task11_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points_11, sigma_RN_task11_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points_11, sigma_RN_task11_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
 
 axs[0].set_title("Mission Scenario MRP Attitude (Task 11)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-# Plot Angular Velocity (B/N and R/N)
-axs[1].plot(time_points_11, omega_BN_task11_history[:, 0], label=r'$\omega_{B/N,1}$')
-axs[1].plot(time_points_11, omega_BN_task11_history[:, 1], label=r'$\omega_{B/N,2}$')
-axs[1].plot(time_points_11, omega_BN_task11_history[:, 2], label=r'$\omega_{B/N,3}$')
+# Plot Angular Velocity history (B/N)
+line1w, = axs[1].plot(time_points_11, omega_BN_task11_history[:, 0], label=r'$\omega_{B/N,1}$')
+line2w, = axs[1].plot(time_points_11, omega_BN_task11_history[:, 1], label=r'$\omega_{B/N,2}$')
+line3w, = axs[1].plot(time_points_11, omega_BN_task11_history[:, 2], label=r'$\omega_{B/N,3}$')
 
-# Add RN (reference angular velocity) with dotted lines
-axs[1].plot(time_points_11, omega_RN_task11_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points_11, omega_RN_task11_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points_11, omega_RN_task11_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+# Plot Angular Velocity history (R/N) with matching colors and dashed lines
+axs[1].plot(time_points_11, omega_RN_task11_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points_11, omega_RN_task11_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points_11, omega_RN_task11_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
 
 axs[1].set_title("Mission Scenario Angular Velocity (Task 11)")
 axs[1].set_xlabel("Time (s)")
@@ -1051,3 +1054,4 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task11_mission_scenario.png")
+
