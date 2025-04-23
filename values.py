@@ -694,6 +694,9 @@ time_points = np.arange(0, t_final + dt, dt)
 # Storage arrays
 sigma_BN_task8_history = []
 omega_BN_task8_history = []
+sigma_RN_task8_history = []
+omega_RN_task8_history = []
+
 log_times = [15, 100, 200, 400]
 log_outputs = {}
 
@@ -716,7 +719,9 @@ for t in time_points:
 
     sigma_BN_task8_history.append(sigma_bn)
     omega_BN_task8_history.append(omega_bn)
-
+    sigma_RN_task8_history.append(DCM2MRP(RN))
+    omega_RN_task8_history.append(omega_rn)
+    
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
         log_outputs[int(t)] = sigma_bn
@@ -732,19 +737,36 @@ for t in time_points:
 # Optional: convert to np.array if plotting
 sigma_BN_task8_history = np.array(sigma_BN_task8_history)
 omega_BN_task8_history = np.array(omega_BN_task8_history)
+sigma_RN_task8_history = np.array(sigma_RN_task8_history)
+omega_RN_task8_history = np.array(omega_RN_task8_history)
 
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
-axs[0].plot(time_points, sigma_BN_task8_history[:, 0], label=r'$\sigma_1$')
-axs[0].plot(time_points, sigma_BN_task8_history[:, 1], label=r'$\sigma_2$')
-axs[0].plot(time_points, sigma_BN_task8_history[:, 2], label=r'$\sigma_3$')
+
+# Plot MRP history (B/N and R/N)
+axs[0].plot(time_points, sigma_BN_task8_history[:, 0], label=r'$\sigma_{B/N,1}$')
+axs[0].plot(time_points, sigma_BN_task8_history[:, 1], label=r'$\sigma_{B/N,2}$')
+axs[0].plot(time_points, sigma_BN_task8_history[:, 2], label=r'$\sigma_{B/N,3}$')
+
+# Add RN (reference attitude) with dotted lines
+axs[0].plot(time_points, sigma_RN_task8_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points, sigma_RN_task8_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points, sigma_RN_task8_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+
 axs[0].set_title("Sun-Pointing MRP Attitude (Task 8)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-axs[1].plot(time_points, omega_BN_task8_history[:, 0], label=r'$\omega_1$')
-axs[1].plot(time_points, omega_BN_task8_history[:, 1], label=r'$\omega_2$')
-axs[1].plot(time_points, omega_BN_task8_history[:, 2], label=r'$\omega_3$')
+# Plot Angular Velocity (B/N and R/N)
+axs[1].plot(time_points, omega_BN_task8_history[:, 0], label=r'$\omega_{B/N,1}$')
+axs[1].plot(time_points, omega_BN_task8_history[:, 1], label=r'$\omega_{B/N,2}$')
+axs[1].plot(time_points, omega_BN_task8_history[:, 2], label=r'$\omega_{B/N,3}$')
+
+# Add RN (reference angular velocity) with dotted lines
+axs[1].plot(time_points, omega_RN_task8_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points, omega_RN_task8_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points, omega_RN_task8_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+
 axs[1].set_title("Sun-Pointing Angular Velocity (Task 8)")
 axs[1].set_xlabel("Time (s)")
 axs[1].set_ylabel("Angular Velocity (rad/s)")
@@ -762,6 +784,8 @@ print("\n\nBEGIN TASK 9")
 X = X_0
 sigma_BN_task9_history = []
 omega_BN_task9_history = []
+sigma_RN_task9_history = []
+omega_RN_task9_history = []
 
 # Run control simulation
 for t in time_points:
@@ -773,7 +797,9 @@ for t in time_points:
 
     sigma_BN_task9_history.append(sigma_bn)
     omega_BN_task9_history.append(omega_bn)
-
+    sigma_RN_task9_history.append(DCM2MRP(RN))
+    omega_RN_task9_history.append(omega_rn)
+    
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
         log_outputs[int(t)] = sigma_bn
@@ -789,19 +815,36 @@ for t in time_points:
 # Optional: convert to np.array if plotting
 sigma_BN_task9_history = np.array(sigma_BN_task9_history)
 omega_BN_task9_history = np.array(omega_BN_task9_history)
+sigma_RN_task9_history = np.array(sigma_RN_task9_history)
+omega_RN_task9_history = np.array(omega_RN_task9_history)
 
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
-axs[0].plot(time_points, sigma_BN_task9_history[:, 0], label=r'$\sigma_1$')
-axs[0].plot(time_points, sigma_BN_task9_history[:, 1], label=r'$\sigma_2$')
-axs[0].plot(time_points, sigma_BN_task9_history[:, 2], label=r'$\sigma_3$')
+
+# Plot MRP history (B/N and R/N)
+axs[0].plot(time_points, sigma_BN_task9_history[:, 0], label=r'$\sigma_{B/N,1}$')
+axs[0].plot(time_points, sigma_BN_task9_history[:, 1], label=r'$\sigma_{B/N,2}$')
+axs[0].plot(time_points, sigma_BN_task9_history[:, 2], label=r'$\sigma_{B/N,3}$')
+
+# Add RN (reference attitude) with dotted lines
+axs[0].plot(time_points, sigma_RN_task9_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points, sigma_RN_task9_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points, sigma_RN_task9_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+
 axs[0].set_title("Nadir-Pointing MRP Attitude (Task 9)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-axs[1].plot(time_points, omega_BN_task9_history[:, 0], label=r'$\omega_1$')
-axs[1].plot(time_points, omega_BN_task9_history[:, 1], label=r'$\omega_2$')
-axs[1].plot(time_points, omega_BN_task9_history[:, 2], label=r'$\omega_3$')
+# Plot Angular Velocity (B/N and R/N)
+axs[1].plot(time_points, omega_BN_task9_history[:, 0], label=r'$\omega_{B/N,1}$')
+axs[1].plot(time_points, omega_BN_task9_history[:, 1], label=r'$\omega_{B/N,2}$')
+axs[1].plot(time_points, omega_BN_task9_history[:, 2], label=r'$\omega_{B/N,3}$')
+
+# Add RN (reference angular velocity) with dotted lines
+axs[1].plot(time_points, omega_RN_task9_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points, omega_RN_task9_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points, omega_RN_task9_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+
 axs[1].set_title("Nadir-Pointing Angular Velocity (Task 9)")
 axs[1].set_xlabel("Time (s)")
 axs[1].set_ylabel("Angular Velocity (rad/s)")
@@ -812,6 +855,7 @@ plt.savefig("task9_nadir_pointing_control.png")
 
 
 
+
 ############################## Task 10: GMO Pointing Control (10 points) ##############################
 print("\n\nBEGIN TASK 10")
 
@@ -819,6 +863,8 @@ print("\n\nBEGIN TASK 10")
 X = X_0
 sigma_BN_task10_history = []
 omega_BN_task10_history = []
+sigma_RN_task10_history = []
+omega_RN_task10_history = []
 
 # Run control simulation
 for t in time_points:
@@ -830,7 +876,9 @@ for t in time_points:
 
     sigma_BN_task10_history.append(sigma_bn)
     omega_BN_task10_history.append(omega_bn)
-
+    sigma_RN_task10_history.append(DCM2MRP(RN))
+    omega_RN_task10_history.append(omega_rn)
+    
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
         log_outputs[int(t)] = sigma_bn
@@ -846,19 +894,36 @@ for t in time_points:
 # Optional: convert to np.array if plotting
 sigma_BN_task10_history = np.array(sigma_BN_task10_history)
 omega_BN_task10_history = np.array(omega_BN_task10_history)
+sigma_RN_task10_history = np.array(sigma_RN_task10_history)
+omega_RN_task10_history = np.array(omega_RN_task10_history)
 
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
-axs[0].plot(time_points, sigma_BN_task10_history[:, 0], label=r'$\sigma_1$')
-axs[0].plot(time_points, sigma_BN_task10_history[:, 1], label=r'$\sigma_2$')
-axs[0].plot(time_points, sigma_BN_task10_history[:, 2], label=r'$\sigma_3$')
+
+# Plot MRP history (B/N and R/N)
+axs[0].plot(time_points, sigma_BN_task10_history[:, 0], label=r'$\sigma_{B/N,1}$')
+axs[0].plot(time_points, sigma_BN_task10_history[:, 1], label=r'$\sigma_{B/N,2}$')
+axs[0].plot(time_points, sigma_BN_task10_history[:, 2], label=r'$\sigma_{B/N,3}$')
+
+# Add RN (reference attitude) with dotted lines
+axs[0].plot(time_points, sigma_RN_task10_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points, sigma_RN_task10_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points, sigma_RN_task10_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+
 axs[0].set_title("GMO-Pointing MRP Attitude (Task 10)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-axs[1].plot(time_points, omega_BN_task10_history[:, 0], label=r'$\omega_1$')
-axs[1].plot(time_points, omega_BN_task10_history[:, 1], label=r'$\omega_2$')
-axs[1].plot(time_points, omega_BN_task10_history[:, 2], label=r'$\omega_3$')
+# Plot Angular Velocity (B/N and R/N)
+axs[1].plot(time_points, omega_BN_task10_history[:, 0], label=r'$\omega_{B/N,1}$')
+axs[1].plot(time_points, omega_BN_task10_history[:, 1], label=r'$\omega_{B/N,2}$')
+axs[1].plot(time_points, omega_BN_task10_history[:, 2], label=r'$\omega_{B/N,3}$')
+
+# Add RN (reference angular velocity) with dotted lines
+axs[1].plot(time_points, omega_RN_task10_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points, omega_RN_task10_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points, omega_RN_task10_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+
 axs[1].set_title("GMO-Pointing Angular Velocity (Task 10)")
 axs[1].set_xlabel("Time (s)")
 axs[1].set_ylabel("Angular Velocity (rad/s)")
@@ -866,6 +931,7 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task10_gmo_pointing_control.png")
+
 
 
 
@@ -881,6 +947,9 @@ time_points_11 = np.arange(0, t_final + dt, dt)
 log_times_11 = [300, 2100, 3400, 4400, 5600]
 sigma_BN_task11_history = []
 omega_BN_task11_history = []
+sigma_RN_task11_history = []
+omega_RN_task11_history = []
+
 log_outputs_11 = {}
 
 # Reset initial state
@@ -930,7 +999,9 @@ for t in time_points_11:
     # Log state
     sigma_BN_task11_history.append(sigma_bn)
     omega_BN_task11_history.append(omega_bn)
-
+    sigma_RN_task11_history.append(DCM2MRP(RN))
+    omega_RN_task11_history.append(omega_rn)
+    
     if int(t) in log_times_11:
         log_outputs_11[int(t)] = sigma_bn
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
@@ -943,19 +1014,36 @@ for t in time_points_11:
 # Optional: convert for plotting
 sigma_BN_task11_history = np.array(sigma_BN_task11_history)
 omega_BN_task11_history = np.array(omega_BN_task11_history)
+sigma_RN_task11_history = np.array(sigma_RN_task11_history)
+omega_RN_task11_history = np.array(omega_RN_task11_history)
 
 # Save final plots
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
-axs[0].plot(time_points_11, sigma_BN_task11_history[:, 0], label=r'$\sigma_1$')
-axs[0].plot(time_points_11, sigma_BN_task11_history[:, 1], label=r'$\sigma_2$')
-axs[0].plot(time_points_11, sigma_BN_task11_history[:, 2], label=r'$\sigma_3$')
+
+# Plot MRP history (B/N and R/N)
+axs[0].plot(time_points_11, sigma_BN_task11_history[:, 0], label=r'$\sigma_{B/N,1}$')
+axs[0].plot(time_points_11, sigma_BN_task11_history[:, 1], label=r'$\sigma_{B/N,2}$')
+axs[0].plot(time_points_11, sigma_BN_task11_history[:, 2], label=r'$\sigma_{B/N,3}$')
+
+# Add RN (reference attitude) with dotted lines
+axs[0].plot(time_points_11, sigma_RN_task11_history[:, 0], 'k--', label=r'$\sigma_{R/N,1}$')
+axs[0].plot(time_points_11, sigma_RN_task11_history[:, 1], 'r--', label=r'$\sigma_{R/N,2}$')
+axs[0].plot(time_points_11, sigma_RN_task11_history[:, 2], 'b--', label=r'$\sigma_{R/N,3}$')
+
 axs[0].set_title("Mission Scenario MRP Attitude (Task 11)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
-axs[1].plot(time_points_11, omega_BN_task11_history[:, 0], label=r'$\omega_1$')
-axs[1].plot(time_points_11, omega_BN_task11_history[:, 1], label=r'$\omega_2$')
-axs[1].plot(time_points_11, omega_BN_task11_history[:, 2], label=r'$\omega_3$')
+# Plot Angular Velocity (B/N and R/N)
+axs[1].plot(time_points_11, omega_BN_task11_history[:, 0], label=r'$\omega_{B/N,1}$')
+axs[1].plot(time_points_11, omega_BN_task11_history[:, 1], label=r'$\omega_{B/N,2}$')
+axs[1].plot(time_points_11, omega_BN_task11_history[:, 2], label=r'$\omega_{B/N,3}$')
+
+# Add RN (reference angular velocity) with dotted lines
+axs[1].plot(time_points_11, omega_RN_task11_history[:, 0], 'k--', label=r'$\omega_{R/N,1}$')
+axs[1].plot(time_points_11, omega_RN_task11_history[:, 1], 'r--', label=r'$\omega_{R/N,2}$')
+axs[1].plot(time_points_11, omega_RN_task11_history[:, 2], 'b--', label=r'$\omega_{R/N,3}$')
+
 axs[1].set_title("Mission Scenario Angular Velocity (Task 11)")
 axs[1].set_xlabel("Time (s)")
 axs[1].set_ylabel("Angular Velocity (rad/s)")
@@ -963,6 +1051,3 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task11_mission_scenario.png")
-
-
-
