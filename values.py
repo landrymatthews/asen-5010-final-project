@@ -334,11 +334,9 @@ def getRcNExpr():
     N_r1_col = -N_dr_col.normalized()
     N_r2_col = (N_dr_col.cross(sp.Matrix([0, 0, 1]))).normalized()
     N_r3_col = N_r1_col.cross(N_r2_col).normalized()
-    RcNExpr = (sp.Matrix.hstack(N_r1_col, N_r2_col, N_r3_col)).T
 
-    with open('./latex/RcN.tex', "w+") as file:
-        file.write((sp.latex(RcNExpr)))
-    return RcNExpr
+    return (sp.Matrix.hstack(N_r1_col, N_r2_col, N_r3_col)).T
+
 
 def getRcN(t):
     RcN = getRcNExpr()
@@ -517,10 +515,8 @@ for t in np.arange(0, t_final + dt, dt):
     # Compute angular momentum H
     H = I_b @ B_omega_BN
     B_H_history.append(H)
-    
-    # Compute N-frame angular momentum N_H
     N_H_history.append(MRP2DCM(B_sigma_BN).T @ H)
-    
+
     # Update attitude using RK4
     X = rk4_integrator(dynamics, X, u, dt, t)
 
@@ -537,7 +533,7 @@ B_H_500 = B_H_history[-1]
 BN_500 = MRP2DCM(sigma_BN_500)
 N_H_500 = BN_500.T @ B_H_500
 N_H_500s = N_H_history[-1]
- 
+
 print(f"MRP attitude at 500s: {sigma_BN_500}")
 print(f"Kinetic energy at 500s: {T_500}")
 print(f"B-Frame Angular momentum at 500s: {B_H_500}")
@@ -648,9 +644,9 @@ t_H = np.linspace(0, t_final, len(B_H_history))  # Same time vector for all
 
 # Plot angular momentum in B and N frames
 plt.figure(figsize=(12, 6))
-for i in range(3):
-    plt.plot(t_H, B_H_history[:, i], label=fr'$H_{{B,{i+1}}}$ (Body Frame)', linestyle='--')
-    plt.plot(t_H, N_H_history[:, i], label=fr'$H_{{N,{i+1}}}$ (Inertial Frame)')
+for j in range(3):
+    plt.plot(t_H, B_H_history[:, j], label=fr'$H_{{B,{j+1}}}$ (Body Frame)')
+    plt.plot(t_H, N_H_history[:, j], label=fr'$H_{{N,{j+1}}}$ (Inertial Frame)', linestyle='--')
 plt.title("Angular Momentum in Body and Inertial Frames")
 plt.xlabel("Time (s)")
 plt.ylabel("Angular Momentum (N·m·s)")
@@ -665,9 +661,15 @@ plt.plot(t_H, T_history, label="Kinetic Energy $T$", color='purple')
 plt.title("Rotational Kinetic Energy Over Time")
 plt.xlabel("Time (s)")
 plt.ylabel("Kinetic Energy (Joules)")
+yax=plt.gca()
+yax.get_yaxis().get_major_formatter().set_useOffset(False)
+yax.ticklabel_format(style='plain', axis='y')
 plt.grid(True)
 plt.tight_layout()
 plt.savefig("task7_kinetic_energy.png")
+
+
+
 
 
 ############################## Task 8: Sun Pointing Control (10 points) ##############################
