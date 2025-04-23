@@ -3,27 +3,6 @@ from sympy import symbols, pprint, cos, sin, Matrix, pi
 import sympy as sp
 import matplotlib.pyplot as plt
 
-# i_r points to s/c
-# i_h direction of H
-# i_theta = i_h x i_r
-# antenna is in the direction of -b_1
-# mars_sensor is in direction of +b_1
-# solar panel normal is in direction of +b_3
-
-# Assume s/c can create any 3d control torque vector u
-# Sun is infinite distance away and always in the n_2 direction
-# Detumble will point antenna at GMO mothership, sensor at Mars (nadir or -r), or solar panels at sun
-# Any time s/c is on sunlit side (ie +n_2 position coordinate), solar panels need to point at sun
-# This means b_3 will point in n_2
-# To complete the 3D frame, assume r_1 must point in the -n_1 direction
-# On shaded side (ie -n_2 position coordinate), must be in comm or sci mode
-# In SCI mode, b_1 must point in nadir direction
-# To complete frame, assume r_2 must line up with orbit alone track axis i_theta
-# In COMM mode, LMO and GMO position vectors have angular difference of <35 degrees
-# This means -b_1 must point in direction of GMO
-
-
-
 ############################## Welcome ##############################
 print("Welcome to the ASEN 5010 Capstone Project")
 print("Attitude Dynamics and Control of a Nano-Satellite Orbiting Mars")
@@ -55,7 +34,8 @@ theta_lmo_0 = np.deg2rad(60)  # function of time
 omega_gmo_0 = 0
 i_gmo_0 = 0
 theta_gmo_0 = np.deg2rad(250)  # function of time
-comm_angle_threshold = 35 # deg
+comm_angle_threshold = 35  # deg
+
 
 ############################## Helper Functions ##############################
 def writeToFile(path, data):
@@ -75,6 +55,7 @@ def writeToFile(path, data):
     with open(path, "w+") as file:
         file.write(str_to_write.rstrip())
 
+
 def theta_lmo(t):
     return theta_lmo_0 + t * theta_lmo_rate
 
@@ -89,6 +70,7 @@ def s(theta):
 
 def c(theta):
     return np.cos(theta)
+
 
 # Returns a skew-symmetric matrix from a vector
 def tilde(v):
@@ -168,12 +150,14 @@ def MRP2DCM(sigma):
         8 * tilde_sigma @ tilde_sigma - 4 * (1 - sigma @ sigma) * tilde_sigma
     ) / ((1 + sigma @ sigma) ** 2)
 
+
 def checkShadowSet(sigma):
-    if (np.linalg.norm(sigma) > 1):
+    if np.linalg.norm(sigma) > 1:
         return -sigma / (sigma @ sigma)
     else:
         return sigma
-    
+
+
 def DCM2MRP(C):
     b = DCM2Quaternion(C)
     divisor = 1 + b[0]
@@ -191,7 +175,7 @@ print("\n\nBEGIN TASK 1")
 # Write a function whose inputs are radius r and 313 angles omega, i, theta,
 # and outputs are the inertial pos vector N_r and vel N_r_dot
 # Calculate the inertial position vector N_r and velocity N_r_dot
-def orbit_sim(r, omega, i, theta):
+def getInertialPositionVectors(r, omega, i, theta):
     # O : {i_r, i_theta, i_h} aka H frame
     # N : {n_1, n_2, n_3}
     ON = Euler313toDCM(omega, i, theta)
@@ -206,10 +190,14 @@ def orbit_sim(r, omega, i, theta):
     return N_r, N_r_dot
 
 
-# confirm the operation by checking orbit_sim(r_lmo, omega_lmo, i_lmo, theta_lmo(450))
-# and orbit_sim(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
-N_r_lmo, N_r_lmo_dot = orbit_sim(r_lmo, omega_lmo_0, i_lmo_0, theta_lmo(450))
-N_r_gmo, N_r_gmo_dot = orbit_sim(r_gmo, omega_gmo_0, i_gmo_0, theta_gmo(1150))
+# confirm the operation by checking getInertialVectors(r_lmo, omega_lmo, i_lmo, theta_lmo(450))
+# and getInertialVectors(r_gmo, omega_gmo, i_gmo, theta_gmo(1150))
+N_r_lmo, N_r_lmo_dot = getInertialPositionVectors(
+    r_lmo, omega_lmo_0, i_lmo_0, theta_lmo(450)
+)
+N_r_gmo, N_r_gmo_dot = getInertialPositionVectors(
+    r_gmo, omega_gmo_0, i_gmo_0, theta_gmo(1150)
+)
 print("rLMO = ", N_r_lmo)
 print("vLMO = ", N_r_lmo_dot)
 print("rGMO = ", N_r_gmo)
@@ -218,7 +206,6 @@ writeToFile("./tasks/task 1/rLMO.txt", N_r_lmo)
 writeToFile("./tasks/task 1/vLMO.txt", N_r_lmo_dot)
 writeToFile("./tasks/task 1/rGMO.txt", N_r_gmo)
 writeToFile("./tasks/task 1/vGMO.txt", N_r_gmo_dot)
-
 
 
 ############################## Task 2: Orbit Frame Orientation (5 points) ##############################
@@ -241,8 +228,9 @@ HN = Matrix(
         [sin(i) * sin(Omega), -sin(i) * cos(Omega), cos(i)],
     ]
 )
-with open('./latex/task_2_HN.tex', "w+") as file:
+with open("./latex/task_2_HN.tex", "w+") as file:
     file.write((sp.latex(HN)))
+
 
 # Write a function whose input is time t and output is DCM HN(t) for the LMO
 def getHNforLMO(t):
@@ -260,12 +248,14 @@ writeToFile("./tasks/task 2/HN.txt", HN_at_t)
 print("\n\nBEGIN TASK 3")
 # First determine and analytic expression for Rs by defining DCM [RsN]
 RsN = np.array([[-1, 0, 0], [0, 0, 1], [0, 1, 0]])
-with open('./latex/RsN.tex', "w+") as file:
+with open("./latex/RsN.tex", "w+") as file:
     file.write((sp.latex(RsN)))
+
 
 # Write a function that returns RsN
 def getRsN():
     return RsN
+
 
 def getOmegaRsN():
     return np.array([0, 0, 0])
@@ -284,9 +274,9 @@ writeToFile("./tasks/task 3/omega_rs_n.txt", getOmegaRsN())
 print("\n\nBEGIN TASK 4")
 # First determine and analytic expression for Rn by defining DCM [RnN]
 RnH = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
-with open('./latex/RnH.tex', "w+") as file:
+with open("./latex/RnH.tex", "w+") as file:
     file.write((sp.latex(RnH)))
-with open('./latex/RnN.tex', "w+") as file:
+with open("./latex/RnN.tex", "w+") as file:
     file.write((sp.latex(RnH @ HN)))
 
 
@@ -374,7 +364,7 @@ def getOmegaRcNAnalytically(time):
     )
 
     ssm = omega_tilde_f(time)
-    ssm = (ssm - ssm.T) / 2 # Force diagonals to 0
+    ssm = (ssm - ssm.T) / 2  # Force diagonals to 0
     R_omega_rcn = sp.Matrix([-ssm[1, 2], ssm[0, 2], -ssm[0, 1]])
     N_omega_rcn = RcN.T @ R_omega_rcn
     N_omega_rcn_f = sp.lambdify(
@@ -385,6 +375,7 @@ def getOmegaRcNAnalytically(time):
     N_omega_rcn_real = N_omega_rcn_f(time)
     return N_omega_rcn_real.flatten()
 
+
 def getOmegaRcN(time):
     dt = 1e-6
 
@@ -394,7 +385,7 @@ def getOmegaRcN(time):
     RcN_dot = (RcN_plus - RcN_minus) / (2 * dt)
 
     ssm = -RcN_dot @ RcN_t.T
-    ssm = (ssm + ssm) / 2 # Force diagonals to 0
+    ssm = (ssm + ssm) / 2  # Force diagonals to 0
     R_omega_rcn = np.array([-ssm[1, 2], ssm[0, 2], -ssm[0, 1]])
     N_omega_rcn = RcN_t.T @ R_omega_rcn
     return N_omega_rcn
@@ -414,6 +405,7 @@ writeToFile("./tasks/task 5/omega_rc_n_anal.txt", omega_RcN_anal_at_t)
 
 ############################## Task 6: Attitude Error Evaluation (10 points) ##############################
 print("\n\nBEGIN TASK 6")
+
 
 # Write function that returns tracking errors sigma_br and omega_br
 def getTrackingErrors(t, sigma_bn, B_omega_bn, RN, N_omega_rn):
@@ -438,7 +430,9 @@ writeToFile("./tasks/task 6/sun-sigma.txt", sigma)
 writeToFile("./tasks/task 6/sun-omega.txt", omega)
 
 # Nadir-pointing
-sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0_rad, getRnN(t), getOmegaRnN(t))
+sigma, omega = getTrackingErrors(
+    t, sigma_bn_0, omega_bn_0_rad, getRnN(t), getOmegaRnN(t)
+)
 print("Nadir-Pointing Orientation")
 print("σ_B/R = ", sigma)
 print("ω_B/R = ", omega)
@@ -446,7 +440,9 @@ writeToFile("./tasks/task 6/nad-sigma.txt", sigma)
 writeToFile("./tasks/task 6/nad-omega.txt", omega)
 
 # GMO-pointing
-sigma, omega = getTrackingErrors(t, sigma_bn_0, omega_bn_0_rad, getRcN(t), getOmegaRcN(t))
+sigma, omega = getTrackingErrors(
+    t, sigma_bn_0, omega_bn_0_rad, getRcN(t), getOmegaRcN(t)
+)
 print("GMO-Pointing Orientation")
 print("σ_B/R = ", sigma)
 print("ω_B/R = ", omega)
@@ -454,35 +450,44 @@ writeToFile("./tasks/task 6/gmo-sigma.txt", sigma)
 writeToFile("./tasks/task 6/gmo-omega.txt", omega)
 
 
-
-
 ############################## Task 7: Numerical Attitude Simulator (10 points) ##############################
 print("\n\nBEGIN TASK 7")
 
 # Write your own numerical integrator using RK45
 
+
 # Define the spacecraft dynamics (equation of motion)
 def dynamics(X, dt, u):
     sigma_BN = X[:3]  # MRP attitude
     sigma_BN_skew = tilde(sigma_BN)
-    sigma_BN = sigma_BN.reshape((3, 1)) # make col
+    sigma_BN = sigma_BN.reshape((3, 1))  # make col
     omega_BN = X[3:]  # Angular velocity
     omega_BN_skew = tilde(omega_BN)
-    omega_BN = omega_BN.reshape((3, 1)) # make col
+    omega_BN = omega_BN.reshape((3, 1))  # make col
     if isinstance(u, np.ndarray):
-        u = u.reshape((3,1))
+        u = u.reshape((3, 1))
     d_omega_BN = I_b_inv @ (-omega_BN_skew @ (I_b @ omega_BN) + u)
-    d_sigma_BN = .25 * ((1 - (sigma_BN.T @ sigma_BN)) * np.eye(3) + 2 * sigma_BN_skew + 2 * sigma_BN @ sigma_BN.T) @ omega_BN
+    d_sigma_BN = (
+        0.25
+        * (
+            (1 - (sigma_BN.T @ sigma_BN)) * np.eye(3)
+            + 2 * sigma_BN_skew
+            + 2 * sigma_BN @ sigma_BN.T
+        )
+        @ omega_BN
+    )
     return np.concatenate((d_sigma_BN.flatten(), d_omega_BN.flatten()))
+
 
 # Runge-Kutta 4th order integrator
 def rk4_integrator(f, X, u, dt, tn):
-    k1 = dt*f(X, tn, u)
-    k2 = dt*f(X+(k1/2), tn+(dt/2), u)
-    k3 = dt*f(X+(k2/2), tn+(dt/2), u)
-    k4 = dt*f(X+k3, tn+dt, u)
-    X = X + (1/6)*(k1+2*k2+2*k3+k4)
+    k1 = dt * f(X, tn, u)
+    k2 = dt * f(X + (k1 / 2), tn + (dt / 2), u)
+    k3 = dt * f(X + (k2 / 2), tn + (dt / 2), u)
+    k4 = dt * f(X + k3, tn + dt, u)
+    X = X + (1 / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
     return X
+
 
 # Time settings
 dt = 1  # 1 second time step
@@ -511,7 +516,7 @@ for t in np.arange(0, t_final + dt, dt):
     # Kinetic Energy
     T = 0.5 * (B_omega_BN.T @ (I_b @ B_omega_BN))
     T_history.append(T)
-    
+
     # Compute angular momentum H
     H = I_b @ B_omega_BN
     B_H_history.append(H)
@@ -550,7 +555,7 @@ u_fixed = np.array([0.01, -0.01, 0.02])  # Fixed control torque
 X = X_0  # Reset initial conditions
 sigma_BN_100_history = []
 omega_BN_100_history = []
-t_final_control = 100 # update to only 100s this time
+t_final_control = 100  # update to only 100s this time
 # Run integration with control torque for 100 seconds
 for t in np.arange(0, t_final_control + dt, dt):
     B_sigma_BN = X[:3]  # MRP attitude
@@ -565,7 +570,7 @@ for t in np.arange(0, t_final_control + dt, dt):
 
     X[:3] = checkShadowSet(X[:3])
 
-    
+
 sigma_BN_100 = sigma_BN_100_history[-1]
 print(f"MRP attitude at 100s with control torque: {sigma_BN_100}")
 writeToFile("./tasks/task 7/sigma_100s_with_control.txt", sigma_BN_100)
@@ -581,18 +586,18 @@ t_sigma = np.linspace(0, t_final, len(sigma_BN_history))
 t_omega = np.linspace(0, t_final, len(omega_BN_history))
 
 # Plot MRP attitude history
-axs[0].plot(t_sigma, sigma_BN_history[:, 0], label=r'$\sigma_1$')
-axs[0].plot(t_sigma, sigma_BN_history[:, 1], label=r'$\sigma_2$')
-axs[0].plot(t_sigma, sigma_BN_history[:, 2], label=r'$\sigma_3$')
+axs[0].plot(t_sigma, sigma_BN_history[:, 0], label=r"$\sigma_1$")
+axs[0].plot(t_sigma, sigma_BN_history[:, 1], label=r"$\sigma_2$")
+axs[0].plot(t_sigma, sigma_BN_history[:, 2], label=r"$\sigma_3$")
 axs[0].set_title("MRP Attitude Without Control")
 axs[0].set_xlabel("Time (s)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
 # Plot Angular velocity history
-axs[1].plot(t_omega, omega_BN_history[:, 0], label=r'$\omega_1$')
-axs[1].plot(t_omega, omega_BN_history[:, 1], label=r'$\omega_2$')
-axs[1].plot(t_omega, omega_BN_history[:, 2], label=r'$\omega_3$')
+axs[1].plot(t_omega, omega_BN_history[:, 0], label=r"$\omega_1$")
+axs[1].plot(t_omega, omega_BN_history[:, 1], label=r"$\omega_2$")
+axs[1].plot(t_omega, omega_BN_history[:, 2], label=r"$\omega_3$")
 axs[1].set_title("Angular Velocity Without Control")
 axs[1].set_xlabel("Time (s)")
 axs[1].set_ylabel("Angular Velocity (rad/s)")
@@ -613,18 +618,18 @@ t_omega = np.linspace(0, t_final_control, len(omega_BN_100_history))
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
 # Plot MRP attitude history
-axs[0].plot(t_sigma, sigma_BN_100_history[:, 0], label=r'$\sigma_1$')
-axs[0].plot(t_sigma, sigma_BN_100_history[:, 1], label=r'$\sigma_2$')
-axs[0].plot(t_sigma, sigma_BN_100_history[:, 2], label=r'$\sigma_3$')
+axs[0].plot(t_sigma, sigma_BN_100_history[:, 0], label=r"$\sigma_1$")
+axs[0].plot(t_sigma, sigma_BN_100_history[:, 1], label=r"$\sigma_2$")
+axs[0].plot(t_sigma, sigma_BN_100_history[:, 2], label=r"$\sigma_3$")
 axs[0].set_title("MRP Attitude With Control")
 axs[0].set_xlabel("Time (s)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
 # Plot Angular velocity history
-axs[1].plot(t_omega, omega_BN_100_history[:, 0], label=r'$\omega_1$')
-axs[1].plot(t_omega, omega_BN_100_history[:, 1], label=r'$\omega_2$')
-axs[1].plot(t_omega, omega_BN_100_history[:, 2], label=r'$\omega_3$')
+axs[1].plot(t_omega, omega_BN_100_history[:, 0], label=r"$\omega_1$")
+axs[1].plot(t_omega, omega_BN_100_history[:, 1], label=r"$\omega_2$")
+axs[1].plot(t_omega, omega_BN_100_history[:, 2], label=r"$\omega_3$")
 axs[1].set_title("Angular Velocity With Control")
 axs[1].set_xlabel("Time (s)")
 axs[1].set_ylabel("Angular Velocity (rad/s)")
@@ -633,7 +638,6 @@ axs[1].legend()
 # Layout and save
 plt.tight_layout()
 plt.savefig("task7_with_control.png")
-
 
 
 # Convert history arrays for plotting
@@ -645,8 +649,13 @@ t_H = np.linspace(0, t_final, len(B_H_history))  # Same time vector for all
 # Plot angular momentum in B and N frames
 plt.figure(figsize=(12, 6))
 for j in range(3):
-    plt.plot(t_H, B_H_history[:, j], label=fr'$H_{{B,{j+1}}}$ (Body Frame)')
-    plt.plot(t_H, N_H_history[:, j], label=fr'$H_{{N,{j+1}}}$ (Inertial Frame)', linestyle='--')
+    plt.plot(t_H, B_H_history[:, j], label=rf"$H_{{B,{j+1}}}$ (Body Frame)")
+    plt.plot(
+        t_H,
+        N_H_history[:, j],
+        label=rf"$H_{{N,{j+1}}}$ (Inertial Frame)",
+        linestyle="--",
+    )
 plt.title("Angular Momentum in Body and Inertial Frames")
 plt.xlabel("Time (s)")
 plt.ylabel("Angular Momentum (N·m·s)")
@@ -657,19 +666,16 @@ plt.savefig("task7_angular_momentum.png")
 
 # Plot kinetic energy
 plt.figure(figsize=(10, 4))
-plt.plot(t_H, T_history, label="Kinetic Energy $T$", color='purple')
+plt.plot(t_H, T_history, label="Kinetic Energy $T$", color="purple")
 plt.title("Rotational Kinetic Energy Over Time")
 plt.xlabel("Time (s)")
 plt.ylabel("Kinetic Energy (Joules)")
-yax=plt.gca()
+yax = plt.gca()
 yax.get_yaxis().get_major_formatter().set_useOffset(False)
-yax.ticklabel_format(style='plain', axis='y')
+yax.ticklabel_format(style="plain", axis="y")
 plt.grid(True)
 plt.tight_layout()
 plt.savefig("task7_kinetic_energy.png")
-
-
-
 
 
 ############################## Task 8: Sun Pointing Control (10 points) ##############################
@@ -684,7 +690,7 @@ P = (2 * I_max) / tau
 K = P**2 / I_min
 
 print("Chosen P = " + str(P) + " and K = " + str(K))
-writeToFile(f"./tasks/task 8/gains.txt", np.array([P,K]))
+writeToFile(f"./tasks/task 8/gains.txt", np.array([P, K]))
 
 # Define time settings
 dt = 1.0  # 1-second step
@@ -699,11 +705,13 @@ omega_RN_task8_history = []
 
 log_times = [15, 100, 200, 400]
 
+
 # PD control function
 def PD_controller(t, sigma_bn, omega_bn, RN, omega_rn, K, P):
     sigma_br, omega_br = getTrackingErrors(t, sigma_bn, omega_bn, RN, omega_rn)
     u = -K * sigma_br - P * omega_br
     return u
+
 
 # Initialize state
 X = X_0
@@ -720,7 +728,7 @@ for t in time_points:
     omega_BN_task8_history.append(omega_bn)
     sigma_RN_task8_history.append(DCM2MRP(RN))
     omega_RN_task8_history.append(omega_rn)
-    
+
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
@@ -742,28 +750,76 @@ omega_RN_task8_history = np.array(omega_RN_task8_history)
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
 # Plot MRP history (B/N)
-line1, = axs[0].plot(time_points, sigma_BN_task8_history[:, 0], label=r'$\sigma_{B/N,1}$')
-line2, = axs[0].plot(time_points, sigma_BN_task8_history[:, 1], label=r'$\sigma_{B/N,2}$')
-line3, = axs[0].plot(time_points, sigma_BN_task8_history[:, 2], label=r'$\sigma_{B/N,3}$')
+(line1,) = axs[0].plot(
+    time_points, sigma_BN_task8_history[:, 0], label=r"$\sigma_{B/N,1}$"
+)
+(line2,) = axs[0].plot(
+    time_points, sigma_BN_task8_history[:, 1], label=r"$\sigma_{B/N,2}$"
+)
+(line3,) = axs[0].plot(
+    time_points, sigma_BN_task8_history[:, 2], label=r"$\sigma_{B/N,3}$"
+)
 
 # Plot MRP history (R/N) with matching colors and dashed lines
-axs[0].plot(time_points, sigma_RN_task8_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points, sigma_RN_task8_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points, sigma_RN_task8_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
+axs[0].plot(
+    time_points,
+    sigma_RN_task8_history[:, 0],
+    "--",
+    color=line1.get_color(),
+    label=r"$\sigma_{R/N,1}$",
+)
+axs[0].plot(
+    time_points,
+    sigma_RN_task8_history[:, 1],
+    "--",
+    color=line2.get_color(),
+    label=r"$\sigma_{R/N,2}$",
+)
+axs[0].plot(
+    time_points,
+    sigma_RN_task8_history[:, 2],
+    "--",
+    color=line3.get_color(),
+    label=r"$\sigma_{R/N,3}$",
+)
 
 axs[0].set_title("Sun-Pointing MRP Attitude (Task 8)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
 # Plot Angular Velocity history (B/N)
-line1w, = axs[1].plot(time_points, omega_BN_task8_history[:, 0], label=r'$\omega_{B/N,1}$')
-line2w, = axs[1].plot(time_points, omega_BN_task8_history[:, 1], label=r'$\omega_{B/N,2}$')
-line3w, = axs[1].plot(time_points, omega_BN_task8_history[:, 2], label=r'$\omega_{B/N,3}$')
+(line1w,) = axs[1].plot(
+    time_points, omega_BN_task8_history[:, 0], label=r"$\omega_{B/N,1}$"
+)
+(line2w,) = axs[1].plot(
+    time_points, omega_BN_task8_history[:, 1], label=r"$\omega_{B/N,2}$"
+)
+(line3w,) = axs[1].plot(
+    time_points, omega_BN_task8_history[:, 2], label=r"$\omega_{B/N,3}$"
+)
 
 # Plot Angular Velocity history (R/N) with matching colors and dashed lines
-axs[1].plot(time_points, omega_RN_task8_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points, omega_RN_task8_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points, omega_RN_task8_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
+axs[1].plot(
+    time_points,
+    omega_RN_task8_history[:, 0],
+    "--",
+    color=line1w.get_color(),
+    label=r"$\omega_{R/N,1}$",
+)
+axs[1].plot(
+    time_points,
+    omega_RN_task8_history[:, 1],
+    "--",
+    color=line2w.get_color(),
+    label=r"$\omega_{R/N,2}$",
+)
+axs[1].plot(
+    time_points,
+    omega_RN_task8_history[:, 2],
+    "--",
+    color=line3w.get_color(),
+    label=r"$\omega_{R/N,3}$",
+)
 
 axs[1].set_title("Sun-Pointing Angular Velocity (Task 8)")
 axs[1].set_xlabel("Time (s)")
@@ -772,8 +828,6 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task8_sun_pointing_control.png")
-
-
 
 
 ############################## Task 9: Nadir Pointing Control (10 points) ##############################
@@ -798,7 +852,7 @@ for t in time_points:
     omega_BN_task9_history.append(omega_bn)
     sigma_RN_task9_history.append(DCM2MRP(RN))
     omega_RN_task9_history.append(omega_rn)
-    
+
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
@@ -820,28 +874,76 @@ omega_RN_task9_history = np.array(omega_RN_task9_history)
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
 # Plot MRP history (B/N)
-line1, = axs[0].plot(time_points, sigma_BN_task9_history[:, 0], label=r'$\sigma_{B/N,1}$')
-line2, = axs[0].plot(time_points, sigma_BN_task9_history[:, 1], label=r'$\sigma_{B/N,2}$')
-line3, = axs[0].plot(time_points, sigma_BN_task9_history[:, 2], label=r'$\sigma_{B/N,3}$')
+(line1,) = axs[0].plot(
+    time_points, sigma_BN_task9_history[:, 0], label=r"$\sigma_{B/N,1}$"
+)
+(line2,) = axs[0].plot(
+    time_points, sigma_BN_task9_history[:, 1], label=r"$\sigma_{B/N,2}$"
+)
+(line3,) = axs[0].plot(
+    time_points, sigma_BN_task9_history[:, 2], label=r"$\sigma_{B/N,3}$"
+)
 
 # Plot MRP history (R/N) with matching colors and dashed lines
-axs[0].plot(time_points, sigma_RN_task9_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points, sigma_RN_task9_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points, sigma_RN_task9_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
+axs[0].plot(
+    time_points,
+    sigma_RN_task9_history[:, 0],
+    "--",
+    color=line1.get_color(),
+    label=r"$\sigma_{R/N,1}$",
+)
+axs[0].plot(
+    time_points,
+    sigma_RN_task9_history[:, 1],
+    "--",
+    color=line2.get_color(),
+    label=r"$\sigma_{R/N,2}$",
+)
+axs[0].plot(
+    time_points,
+    sigma_RN_task9_history[:, 2],
+    "--",
+    color=line3.get_color(),
+    label=r"$\sigma_{R/N,3}$",
+)
 
 axs[0].set_title("Nadir-Pointing MRP Attitude (Task 9)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
 # Plot Angular Velocity history (B/N)
-line1w, = axs[1].plot(time_points, omega_BN_task9_history[:, 0], label=r'$\omega_{B/N,1}$')
-line2w, = axs[1].plot(time_points, omega_BN_task9_history[:, 1], label=r'$\omega_{B/N,2}$')
-line3w, = axs[1].plot(time_points, omega_BN_task9_history[:, 2], label=r'$\omega_{B/N,3}$')
+(line1w,) = axs[1].plot(
+    time_points, omega_BN_task9_history[:, 0], label=r"$\omega_{B/N,1}$"
+)
+(line2w,) = axs[1].plot(
+    time_points, omega_BN_task9_history[:, 1], label=r"$\omega_{B/N,2}$"
+)
+(line3w,) = axs[1].plot(
+    time_points, omega_BN_task9_history[:, 2], label=r"$\omega_{B/N,3}$"
+)
 
 # Plot Angular Velocity history (R/N) with matching colors and dashed lines
-axs[1].plot(time_points, omega_RN_task9_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points, omega_RN_task9_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points, omega_RN_task9_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
+axs[1].plot(
+    time_points,
+    omega_RN_task9_history[:, 0],
+    "--",
+    color=line1w.get_color(),
+    label=r"$\omega_{R/N,1}$",
+)
+axs[1].plot(
+    time_points,
+    omega_RN_task9_history[:, 1],
+    "--",
+    color=line2w.get_color(),
+    label=r"$\omega_{R/N,2}$",
+)
+axs[1].plot(
+    time_points,
+    omega_RN_task9_history[:, 2],
+    "--",
+    color=line3w.get_color(),
+    label=r"$\omega_{R/N,3}$",
+)
 
 axs[1].set_title("Nadir-Pointing Angular Velocity (Task 9)")
 axs[1].set_xlabel("Time (s)")
@@ -850,9 +952,6 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task9_nadir_pointing_control.png")
-
-
-
 
 
 ############################## Task 10: GMO Pointing Control (10 points) ##############################
@@ -877,7 +976,7 @@ for t in time_points:
     omega_BN_task10_history.append(omega_bn)
     sigma_RN_task10_history.append(DCM2MRP(RN))
     omega_RN_task10_history.append(omega_rn)
-    
+
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
@@ -899,28 +998,76 @@ omega_RN_task10_history = np.array(omega_RN_task10_history)
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
 # Plot MRP history (B/N)
-line1, = axs[0].plot(time_points, sigma_BN_task10_history[:, 0], label=r'$\sigma_{B/N,1}$')
-line2, = axs[0].plot(time_points, sigma_BN_task10_history[:, 1], label=r'$\sigma_{B/N,2}$')
-line3, = axs[0].plot(time_points, sigma_BN_task10_history[:, 2], label=r'$\sigma_{B/N,3}$')
+(line1,) = axs[0].plot(
+    time_points, sigma_BN_task10_history[:, 0], label=r"$\sigma_{B/N,1}$"
+)
+(line2,) = axs[0].plot(
+    time_points, sigma_BN_task10_history[:, 1], label=r"$\sigma_{B/N,2}$"
+)
+(line3,) = axs[0].plot(
+    time_points, sigma_BN_task10_history[:, 2], label=r"$\sigma_{B/N,3}$"
+)
 
 # Plot MRP history (R/N) with matching colors and dashed lines
-axs[0].plot(time_points, sigma_RN_task10_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points, sigma_RN_task10_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points, sigma_RN_task10_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
+axs[0].plot(
+    time_points,
+    sigma_RN_task10_history[:, 0],
+    "--",
+    color=line1.get_color(),
+    label=r"$\sigma_{R/N,1}$",
+)
+axs[0].plot(
+    time_points,
+    sigma_RN_task10_history[:, 1],
+    "--",
+    color=line2.get_color(),
+    label=r"$\sigma_{R/N,2}$",
+)
+axs[0].plot(
+    time_points,
+    sigma_RN_task10_history[:, 2],
+    "--",
+    color=line3.get_color(),
+    label=r"$\sigma_{R/N,3}$",
+)
 
 axs[0].set_title("GMO-Pointing MRP Attitude (Task 10)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
 # Plot Angular Velocity history (B/N)
-line1w, = axs[1].plot(time_points, omega_BN_task10_history[:, 0], label=r'$\omega_{B/N,1}$')
-line2w, = axs[1].plot(time_points, omega_BN_task10_history[:, 1], label=r'$\omega_{B/N,2}$')
-line3w, = axs[1].plot(time_points, omega_BN_task10_history[:, 2], label=r'$\omega_{B/N,3}$')
+(line1w,) = axs[1].plot(
+    time_points, omega_BN_task10_history[:, 0], label=r"$\omega_{B/N,1}$"
+)
+(line2w,) = axs[1].plot(
+    time_points, omega_BN_task10_history[:, 1], label=r"$\omega_{B/N,2}$"
+)
+(line3w,) = axs[1].plot(
+    time_points, omega_BN_task10_history[:, 2], label=r"$\omega_{B/N,3}$"
+)
 
 # Plot Angular Velocity history (R/N) with matching colors and dashed lines
-axs[1].plot(time_points, omega_RN_task10_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points, omega_RN_task10_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points, omega_RN_task10_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
+axs[1].plot(
+    time_points,
+    omega_RN_task10_history[:, 0],
+    "--",
+    color=line1w.get_color(),
+    label=r"$\omega_{R/N,1}$",
+)
+axs[1].plot(
+    time_points,
+    omega_RN_task10_history[:, 1],
+    "--",
+    color=line2w.get_color(),
+    label=r"$\omega_{R/N,2}$",
+)
+axs[1].plot(
+    time_points,
+    omega_RN_task10_history[:, 2],
+    "--",
+    color=line3w.get_color(),
+    label=r"$\omega_{R/N,3}$",
+)
 
 axs[1].set_title("GMO-Pointing Angular Velocity (Task 10)")
 axs[1].set_xlabel("Time (s)")
@@ -929,7 +1076,6 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task10_gmo_pointing_control.png")
-
 
 
 ############################## Task 11: Mission Scenario Simulation (10 points) ##############################
@@ -949,8 +1095,9 @@ omega_RN_task11_history = []
 # Reset initial state
 X = np.copy(X_0)
 
+
 # Mission logic: determine mode based on positions
-def determine_control_mode(t, r_LMO_inertial, r_GMO_inertial, sun_vector=np.array([-1, 0, 0])):
+def determine_control_mode(r_LMO_inertial, r_GMO_inertial):
     in_sunlight = r_LMO_inertial[1] > 0
     r_LMO_unit = r_LMO_inertial / np.linalg.norm(r_LMO_inertial)
     r_GMO_unit = r_GMO_inertial / np.linalg.norm(r_GMO_inertial)
@@ -958,11 +1105,12 @@ def determine_control_mode(t, r_LMO_inertial, r_GMO_inertial, sun_vector=np.arra
     in_comm_window = angle < np.deg2rad(comm_angle_threshold)
 
     if in_sunlight:
-        return 'sun'
+        return "sun"
     elif in_comm_window:
-        return 'gmo'
+        return "gmo"
     else:
-        return 'nadir'
+        return "nadir"
+
 
 # Run mission simulation
 for t in time_points_11:
@@ -970,20 +1118,24 @@ for t in time_points_11:
     omega_bn = X[3:]
 
     # Compute inertial positions of LMO and GMO
-    r_LMO_inertial, _ = orbit_sim(r_lmo, omega_lmo_0, i_lmo_0, theta_lmo(t))
-    r_GMO_inertial, _ = orbit_sim(r_gmo, omega_gmo_0, i_gmo_0, theta_gmo(t))
+    r_LMO_inertial, _ = getInertialPositionVectors(
+        r_lmo, omega_lmo_0, i_lmo_0, theta_lmo(t)
+    )
+    r_GMO_inertial, _ = getInertialPositionVectors(
+        r_gmo, omega_gmo_0, i_gmo_0, theta_gmo(t)
+    )
 
     # Determine control mode
-    mode = determine_control_mode(t, r_LMO_inertial, r_GMO_inertial)
+    mode = determine_control_mode(r_LMO_inertial, r_GMO_inertial)
 
     # Get reference attitude and rate based on mode
-    if mode == 'sun':
+    if mode == "sun":
         RN = getRsN()
         omega_rn = getOmegaRsN()
-    elif mode == 'nadir':
+    elif mode == "nadir":
         RN = getRnN(t)
         omega_rn = getOmegaRnN(t)
-    elif mode == 'gmo':
+    elif mode == "gmo":
         RN = getRcN(t)
         omega_rn = getOmegaRcN(t)
 
@@ -995,7 +1147,7 @@ for t in time_points_11:
     omega_BN_task11_history.append(omega_bn)
     sigma_RN_task11_history.append(DCM2MRP(RN))
     omega_RN_task11_history.append(omega_rn)
-    
+
     if int(t) in log_times_11:
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
         writeToFile(f"./tasks/task 11/sigma_{int(t)}s.txt", sigma_bn)
@@ -1014,28 +1166,76 @@ omega_RN_task11_history = np.array(omega_RN_task11_history)
 fig, axs = plt.subplots(2, 1, figsize=(12, 6))
 
 # Plot MRP history (B/N)
-line1, = axs[0].plot(time_points_11, sigma_BN_task11_history[:, 0], label=r'$\sigma_{B/N,1}$')
-line2, = axs[0].plot(time_points_11, sigma_BN_task11_history[:, 1], label=r'$\sigma_{B/N,2}$')
-line3, = axs[0].plot(time_points_11, sigma_BN_task11_history[:, 2], label=r'$\sigma_{B/N,3}$')
+(line1,) = axs[0].plot(
+    time_points_11, sigma_BN_task11_history[:, 0], label=r"$\sigma_{B/N,1}$"
+)
+(line2,) = axs[0].plot(
+    time_points_11, sigma_BN_task11_history[:, 1], label=r"$\sigma_{B/N,2}$"
+)
+(line3,) = axs[0].plot(
+    time_points_11, sigma_BN_task11_history[:, 2], label=r"$\sigma_{B/N,3}$"
+)
 
 # Plot MRP history (R/N) with matching colors and dashed lines
-axs[0].plot(time_points_11, sigma_RN_task11_history[:, 0], '--', color=line1.get_color(), label=r'$\sigma_{R/N,1}$')
-axs[0].plot(time_points_11, sigma_RN_task11_history[:, 1], '--', color=line2.get_color(), label=r'$\sigma_{R/N,2}$')
-axs[0].plot(time_points_11, sigma_RN_task11_history[:, 2], '--', color=line3.get_color(), label=r'$\sigma_{R/N,3}$')
+axs[0].plot(
+    time_points_11,
+    sigma_RN_task11_history[:, 0],
+    "--",
+    color=line1.get_color(),
+    label=r"$\sigma_{R/N,1}$",
+)
+axs[0].plot(
+    time_points_11,
+    sigma_RN_task11_history[:, 1],
+    "--",
+    color=line2.get_color(),
+    label=r"$\sigma_{R/N,2}$",
+)
+axs[0].plot(
+    time_points_11,
+    sigma_RN_task11_history[:, 2],
+    "--",
+    color=line3.get_color(),
+    label=r"$\sigma_{R/N,3}$",
+)
 
 axs[0].set_title("Mission Scenario MRP Attitude (Task 11)")
 axs[0].set_ylabel("MRP Components")
 axs[0].legend()
 
 # Plot Angular Velocity history (B/N)
-line1w, = axs[1].plot(time_points_11, omega_BN_task11_history[:, 0], label=r'$\omega_{B/N,1}$')
-line2w, = axs[1].plot(time_points_11, omega_BN_task11_history[:, 1], label=r'$\omega_{B/N,2}$')
-line3w, = axs[1].plot(time_points_11, omega_BN_task11_history[:, 2], label=r'$\omega_{B/N,3}$')
+(line1w,) = axs[1].plot(
+    time_points_11, omega_BN_task11_history[:, 0], label=r"$\omega_{B/N,1}$"
+)
+(line2w,) = axs[1].plot(
+    time_points_11, omega_BN_task11_history[:, 1], label=r"$\omega_{B/N,2}$"
+)
+(line3w,) = axs[1].plot(
+    time_points_11, omega_BN_task11_history[:, 2], label=r"$\omega_{B/N,3}$"
+)
 
 # Plot Angular Velocity history (R/N) with matching colors and dashed lines
-axs[1].plot(time_points_11, omega_RN_task11_history[:, 0], '--', color=line1w.get_color(), label=r'$\omega_{R/N,1}$')
-axs[1].plot(time_points_11, omega_RN_task11_history[:, 1], '--', color=line2w.get_color(), label=r'$\omega_{R/N,2}$')
-axs[1].plot(time_points_11, omega_RN_task11_history[:, 2], '--', color=line3w.get_color(), label=r'$\omega_{R/N,3}$')
+axs[1].plot(
+    time_points_11,
+    omega_RN_task11_history[:, 0],
+    "--",
+    color=line1w.get_color(),
+    label=r"$\omega_{R/N,1}$",
+)
+axs[1].plot(
+    time_points_11,
+    omega_RN_task11_history[:, 1],
+    "--",
+    color=line2w.get_color(),
+    label=r"$\omega_{R/N,2}$",
+)
+axs[1].plot(
+    time_points_11,
+    omega_RN_task11_history[:, 2],
+    "--",
+    color=line3w.get_color(),
+    label=r"$\omega_{R/N,3}$",
+)
 
 axs[1].set_title("Mission Scenario Angular Velocity (Task 11)")
 axs[1].set_xlabel("Time (s)")
@@ -1044,4 +1244,3 @@ axs[1].legend()
 
 plt.tight_layout()
 plt.savefig("task11_mission_scenario.png")
-
