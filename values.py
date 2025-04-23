@@ -698,7 +698,6 @@ sigma_RN_task8_history = []
 omega_RN_task8_history = []
 
 log_times = [15, 100, 200, 400]
-log_outputs = {}
 
 # PD control function
 def PD_controller(t, sigma_bn, omega_bn, RN, omega_rn, K, P):
@@ -724,7 +723,6 @@ for t in time_points:
     
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
-        log_outputs[int(t)] = sigma_bn
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
         writeToFile(f"./tasks/task 8/sigma_{int(t)}s.txt", sigma_bn)
 
@@ -803,7 +801,6 @@ for t in time_points:
     
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
-        log_outputs[int(t)] = sigma_bn
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
         writeToFile(f"./tasks/task 9/sigma_{int(t)}s.txt", sigma_bn)
 
@@ -883,7 +880,6 @@ for t in time_points:
     
     # Log MRPs at requested times (short rotation set)
     if int(t) in log_times:
-        log_outputs[int(t)] = sigma_bn
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
         writeToFile(f"./tasks/task 10/sigma_{int(t)}s.txt", sigma_bn)
 
@@ -936,9 +932,6 @@ plt.savefig("task10_gmo_pointing_control.png")
 
 
 
-
-
-
 ############################## Task 11: Mission Scenario Simulation (10 points) ##############################
 print("\n\nBEGIN TASK 11")
 
@@ -952,8 +945,6 @@ sigma_BN_task11_history = []
 omega_BN_task11_history = []
 sigma_RN_task11_history = []
 omega_RN_task11_history = []
-
-log_outputs_11 = {}
 
 # Reset initial state
 X = np.copy(X_0)
@@ -1006,7 +997,6 @@ for t in time_points_11:
     omega_RN_task11_history.append(omega_rn)
     
     if int(t) in log_times_11:
-        log_outputs_11[int(t)] = sigma_bn
         print(f"σB/N at t = {int(t)}s {sigma_bn}")
         writeToFile(f"./tasks/task 11/sigma_{int(t)}s.txt", sigma_bn)
 
