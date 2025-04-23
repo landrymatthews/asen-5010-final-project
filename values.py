@@ -499,6 +499,7 @@ sigma_BN_history = []
 omega_BN_history = []
 T_history = []
 B_H_history = []
+N_H_history = []
 
 # Integration loop (u = 0 for this part)
 X = X_0
@@ -517,6 +518,9 @@ for t in np.arange(0, t_final + dt, dt):
     H = I_b @ B_omega_BN
     B_H_history.append(H)
     
+    # Compute N-frame angular momentum N_H
+    N_H_history.append(MRP2DCM(B_sigma_BN).T @ H)
+    
     # Update attitude using RK4
     X = rk4_integrator(dynamics, X, u, dt, t)
 
@@ -532,11 +536,13 @@ T_500 = T_history[-1]
 B_H_500 = B_H_history[-1]
 BN_500 = MRP2DCM(sigma_BN_500)
 N_H_500 = BN_500.T @ B_H_500
-
+N_H_500s = N_H_history[-1]
+ 
 print(f"MRP attitude at 500s: {sigma_BN_500}")
 print(f"Kinetic energy at 500s: {T_500}")
 print(f"B-Frame Angular momentum at 500s: {B_H_500}")
 print(f"N-Frame Angular momentum at 500s: {N_H_500}")
+print(f"N-Frame Angular momentum at 500s: {N_H_500s}")
 writeToFile("./tasks/task 7/sigma_500s.txt", sigma_BN_500)
 writeToFile("./tasks/task 7/T_500s.txt", T_500)
 writeToFile("./tasks/task 7/H_500s_B_frame.txt", B_H_500)
