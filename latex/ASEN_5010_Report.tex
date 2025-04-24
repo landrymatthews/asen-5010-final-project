@@ -33,7 +33,58 @@
 This document outlines the work completed for Tasks 1 through 11 of the ASEN 5010 Capstone Project - Attitude Dynamics and Control of a nano-Satellite Orbiting Mars. These tasks focus on simulating and analyzing the orbit and attitude dynamics of a nano-satellite in low Mars orbit. Results are derived using Python-based simulation frameworks and validated through analytical and numerical approaches, as well as through Coursera.
 \end{abstract}
 
-\section*{Introduction}
+\section{Nomenclature}
+
+{\renewcommand\arraystretch{1.0}
+\noindent\begin{longtable*}{@{}l @{\quad=\quad} l@{}}
+$(\Omega,i,\theta)$  & (3-1-3) Euler angles \\
+$[BN]$ & direction cosine matrix from $\mathcal{N}$ frame to $\mathcal{B}$ frame \\
+$[C]^T$ & transpose of the matrix $[C]$ \\ 
+$[I_{3x3}]$ & a 3x3 identity matrix \\
+$[\tilde{\bm\omega}]$ & skew-symmetric matrix of the vector $\bm\omega$ \\
+${}^B[I]$  & inertia tensor $[I]$ expressed in $\mathcal{B}$ frame components \\
+${}^B\bm u$ & control torque vector expressed in $\mathcal{B}$ frame components \\
+${}^B\bm\omega_{R/N}$ & angular velocity of the $\mathcal{R}$ frame with respect to the $\mathcal{N}$ frame, expressed in $\mathcal{B}$ frame components \\
+${}^N\bm r$ & vector $\bm r$ expressed in $\mathcal{N}$ frame components \\
+$|\bm r|$ & magnitude/norm of the vector $\bm r$ \\ 
+$\beta$ & quaternion \\
+$\bm {}^BH$   & angular momentum vector $\bm H$ expressed in $\mathcal{B}$ frame components \\
+$\bm r^T$ & transpose of the vector $\bm r$ \\ 
+$\bm X$ & state vector \\
+$\bm\sigma^S$ & the shadow MRP set of $\bm\sigma$ \\
+$\bm\sigma_{B/N}$ & modified Rodrigues parameters from $\mathcal{N}$ frame to $\mathcal{B}$ frame \\
+$\sigma^2$ & the same as $\bm\sigma^T\bm\sigma$\\
+$\sigma_i$ & the $i$th component of the MRP set $\bm\sigma$ \\
+$\dot\theta$ & derivative of $\theta$ \\
+$\hat{\bm n}_1$ & unit vector of a frame (e.g. $\mathcal{N}$ frame) \\
+$\mathcal{B}$ & spacecraft body frame - also seen as $B$ \\
+$\mathcal{H}$ & orbital Hill frame - also seen as $H$ \\
+$\mathcal{N}$ & mars centered inertial frame - also seen as $N$ \\
+$\mathcal{O} : \{{\hat{\bm{i}}_r, \hat{\bm{i}}_{\theta}, \hat{\bm{i}}_h}\}$ & coordinate frame $\mathcal{O}$ (also seen as $O$) defined with three unit vector directions $\{{\hat{\bm{i}}_r, \hat{\bm{i}}_{\theta}, \hat{\bm{i}}_h}\}$ \\
+$\mathcal{R}$ & generic spacecraft reference frame - also seen as $R$ \\
+$\mathcal{R}_c$ & GMO-pointing communication reference frame - also seen as $R_c$ \\
+$\mathcal{R}_n$ & nadir-pointing reference frame - also seen as $R_n$ \\
+$\mathcal{R}_s$ & sun-pointing reference frame - also seen as $R_s$ \\
+$\mu$ & gravitational constant \\
+$\xi$ & damping ratio \\
+$K$ & scalar attitude feedback gain \\
+$P$ & scalar angular velocity feedback gain \\
+$t$ & time \\
+$T$ & rotational kinetic energy \\
+DCM  & direction cosine matrix \\
+GMO & geosynchronous Mars orbit satellite \\
+J & Joules \\
+kg & kilograms \\
+LMO & low Mars orbit satellite \\
+m & meters \\
+MRPs & modified Rodrigues parameters \\
+PD & proportional-derivative control \\
+RK4 & Runge-Kutta 4th order integrator \\
+s & seconds \\
+\end{longtable*}}
+
+
+\section{Introduction}
 This project involves the design and implementation of an attitude control system for a small nano-satellite in a circular low Mars orbit (LMO). The satellite performs three key mission functions: gathering science data by pointing a sensor nadir towards Mars, recharging via solar panels by pointing its solar array towards the Sun, and transmitting data to a geosynchronous Mars orbit (GMO) mother satellite by aligning its communication platform.
 
 We assume the Mars-inertial frame $\mathcal{N}$ and Hill frame $\mathcal{H} = \{\hat{\bm{i}}_r, \hat{\bm{i}}_{\theta}, \hat{\bm{i}}_h\}$ base vectors are as shown in the following figure.\begin{figure}[H]
@@ -206,7 +257,7 @@ This task calculates the orientation of the orbit frame $\mathcal{H} : \{\hat{\b
 Next we validate our results. The DCM $[HN]$ is computed and evaluated at $t = 300$ s.
 
 \[
-HN(t = 300s) = 
+[HN](t = 300s) = 
 \begin{bmatrix}
 -0.0465 & \phantom{-}0.8741 & 0.4834 \\
 -0.9842 & -0.1229 & 0.1277 \\
@@ -237,7 +288,7 @@ Checking these values through Coursera confirms our calculations are correct.
 Now we begin with the first of our three reference frame implementations. When the spacecraft is on the sunlit side (positive $\hat{\bm{n}}_2$ coordinate), we want to define the reference frame so that the +$\hat{\bm{r}}_3$ axis (which will correspond to the satellite's solar panel normal) points to the sun, assumed to be in the +$\hat{\bm{n}}_2$ direction. To build an orthonormal frame, we use the -$\hat{\bm{n}}_1$ axis to define +$\hat{\bm{r}}_1$. Further, we know based on wanting a right handed frame that this means $\hat{\bm{r}}_2$ will be aligned with the $\hat{\bm{n}}_3$ direction. Based on these frame and unit vector definitions/relationships, we can derive the trivial DCM for the sun reference frame without needing any calculation:
 
 \[
-R_sN(t = 0s) = R_sN = 
+[R_sN](t = 0s) = R_sN = 
 \begin{bmatrix}
 -1 & 0 & 0 \\
 \phantom{-}0 & 0 & 1 \\
@@ -272,7 +323,7 @@ Finally, we check these values through Coursera and see that our logic and deriv
 
 \section{Task 4: Nadir-Pointing Reference Frame Orientation}
 The next reference frame we must assemble is the nadir one. On the shadowed side of Mars, and with the GMO mothership out of the 35\textdegree\  threshold to perform communication, the satellite will instead collect science data using its sensors. To do this, it must point its sensor (+$\hat{\bm{b}}_1$) directly toward the nadir direction (toward Mars' center). This means our nadir reference frame is constructed such that +$\hat{\bm{r}}_1$ points nadir to Mars (in the -$\hat{\bm{i}}_r$ direction) and +$\hat{\bm{r}}_2$ points in the velocity direction +$\hat{\bm{i}}_\theta$. Recall that the $\hat{\bm{i}}$ unit vectors are part of the $\mathcal{H}$ frame. We can then complete the reference frame by using a right handed system, which gives us $\hat{\bm{r}}_3$ in the -$\hat{\bm{i}}_h$ direction. From here, we can again easily define the DCM from our reference frame $\mathcal{H}$ to the $\mathcal{R}_n$ frame defined above as 
- \[R_nH = \begin{bmatrix}
+ \[[R_nH] = \begin{bmatrix}
 -1 & \phantom{-}0 & \phantom{-}0 \\
 \phantom{-}0 & \phantom{-}1 & \phantom{-}0 \\
 \phantom{-}0 & \phantom{-}0 & -1
@@ -343,7 +394,7 @@ After normalizing, this gives us our first unit vector $\hat{\bm{r}}_1$ in terms
 Further, I created a wrapper function \texttt{getRcN(t)} which takes in time and evaluates and returns a numeric version of the $[R_cN]$ matrix from \texttt{getRcNExpr()}. Evaluating this function at $t=330$s returns the following matrix:
 
 \[
-R_cN =
+[R_cN] =
 \begin{bmatrix}
 \phantom{-}0.2655 & \phantom{-}0.9609 & 0.0784 \\
 -0.9639 & \phantom{-}0.2663 & 0 \\
@@ -663,7 +714,7 @@ In the next few sections, well be testing each control pointing mode individuall
 \[
 {}^B\bm{u} = -K\bm{\sigma}_{B/R} - P{}^B\bm{\omega}_{B/R}
 \]
-For the next three tasks, we assume the spacecraft engages with the corresponding pointing control mode at time $t=0$. For all remaining tasks, we must integrate the control torque equation into our simulation, ensuring that our desired pointing is achieved with closed-loop performance. In this task, that desired pointing is the sun-pointing mode. We want to use linearized closed loop dynamics to determine the scalar feedback gains $K$ and $P$ such that the slowest decay response time is 120 seconds. Additionally, the closed loop response for all attitude components should be either critically damped or underdamped. This means our damping ratio must be $\xi\leq1$. From that information, we can start by deriving our $P$ value using the time decay equation
+For the next three tasks, we assume the spacecraft engages with the corresponding pointing control mode at time $t=0$. For all remaining tasks, we must integrate the control torque equation into our simulation, ensuring that our desired pointing is achieved with closed-loop performance. In this task, that desired pointing is the sun-pointing mode. We want to use linearized closed loop dynamics to determine the scalar attitude feedback gain $K$ and scalar angular velocity feedback gain $P$ such that the slowest decay response time is 120 seconds. Additionally, the closed loop response for all attitude components should be either critically damped or underdamped. This means our damping ratio must be $\xi\leq1$. From that information, we can start by deriving our $P$ value using the time decay equation
 \[
 T_i=\frac{2I_i}{P_i} \Longrightarrow P_i=\frac{2I_i}{T_i} \tag{\cite{schaub},~eq. 8.119}
 \]
